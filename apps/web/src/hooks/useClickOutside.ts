@@ -11,6 +11,8 @@ type EventType =
   | "focusin"
   | "focusout";
 
+
+
 /**
  * Custom hook that handles clicks outside a specified element.
  * @template T - The type of the element's reference.
@@ -45,8 +47,8 @@ export function useClickOutside<T extends HTMLElement = HTMLElement>(
 
       const isOutside = Array.isArray(ref)
         ? ref
-            .filter((r) => Boolean(r.current))
-            .every((r) => r.current && !r.current.contains(target))
+          .filter((r) => Boolean(r.current))
+          .every((r) => r.current && !r.current.contains(target))
         : ref.current && !ref.current.contains(target);
 
       if (isOutside) {
