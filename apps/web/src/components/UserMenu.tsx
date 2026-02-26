@@ -199,17 +199,6 @@ export default function UserMenu({
                 </Link>
               </Menu.Item>
               <Menu.Item>
-                <Link
-                  href="https://docs.kan.bn"
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={handleLinkClick}
-                  className="flex w-full items-center rounded-[5px] px-3 py-2 text-left text-xs hover:bg-light-200 dark:hover:bg-dark-400"
-                >
-                  {t`Documentation`}
-                </Link>
-              </Menu.Item>
-              <Menu.Item>
                 <button
                   onClick={() => handleModalOpen("NEW_FEEDBACK")}
                   className="flex w-full items-center rounded-[5px] px-3 py-2 text-left text-xs hover:bg-light-200 dark:hover:bg-dark-400"
