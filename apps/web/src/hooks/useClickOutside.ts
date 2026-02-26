@@ -13,6 +13,7 @@ type EventType =
 
 
 
+
 /**
  * Custom hook that handles clicks outside a specified element.
  * @template T - The type of the element's reference.
