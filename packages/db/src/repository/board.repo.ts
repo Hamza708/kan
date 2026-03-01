@@ -15,6 +15,7 @@ import {
 import type { dbClient } from "@kan/db/client";
 import type { BoardVisibilityStatus } from "@kan/db/schema";
 import {
+  boardMembers,
   boards,
   cardActivities,
   cardAttachments,
@@ -46,6 +47,25 @@ export const getAllByWorkspaceId = async (
   userId: string,
   opts?: { type?: "regular" | "template" },
 ) => {
+  // Only boards the user is a member of (board_members)
+  const memberRows = await db
+    .select({ boardId: boardMembers.boardId })
+    .from(boardMembers)
+    .innerJoin(boards, eq(boardMembers.boardId, boards.id))
+    .where(
+      and(
+        eq(boardMembers.userId, userId),
+        isNull(boardMembers.deletedAt),
+        eq(boards.workspaceId, workspaceId),
+        isNull(boards.deletedAt),
+        opts?.type ? eq(boards.type, opts.type) : undefined,
+      ),
+    );
+  const boardIds = memberRows.map((r) => r.boardId);
+  if (boardIds.length === 0) {
+    return [];
+  }
+
   const boardsData = await db.query.boards.findMany({
     columns: {
       publicId: true,
@@ -75,8 +95,7 @@ export const getAllByWorkspaceId = async (
       },
     },
     where: and(
-      eq(boards.workspaceId, workspaceId),
-      isNull(boards.deletedAt),
+      inArray(boards.id, boardIds),
       opts?.type ? eq(boards.type, opts.type) : undefined,
     ),
   });
@@ -704,8 +723,15 @@ export const getWorkspaceAndBoardIdByBoardPublicId = async (
   const result = await db.query.boards.findFirst({
     columns: {
       id: true,
+      publicId: true,
+      name: true,
       workspaceId: true,
       createdBy: true,
+    },
+    with: {
+      workspace: {
+        columns: { publicId: true },
+      },
     },
     where: eq(boards.publicId, boardPublicId),
   });

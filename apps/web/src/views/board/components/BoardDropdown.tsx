@@ -5,6 +5,7 @@ import {
   HiOutlineDocumentDuplicate,
   HiOutlineStar,
   HiOutlineTrash,
+  HiOutlineUserGroup,
   HiStar,
 } from "react-icons/hi2";
 
@@ -28,7 +29,12 @@ export default function BoardDropdown({
   boardName?: string;
 }) {
   const { openModal } = useModal();
-  const { canEditBoard, canDeleteBoard, canCreateBoard } = usePermissions();
+  const {
+    canEditBoard,
+    canDeleteBoard,
+    canCreateBoard,
+    hasPermission,
+  } = usePermissions();
   const { showPopup } = usePopup();
   const utils = api.useUtils();
 
@@ -84,6 +90,17 @@ export default function BoardDropdown({
             label: t`Edit board URL`,
             action: () => openModal("UPDATE_BOARD_SLUG"),
             icon: <HiLink className="h-[16px] w-[16px] text-dark-900" />,
+          },
+        ]
+      : []),
+    ...(!isTemplate && (canEditBoard || hasPermission("board:view"))
+      ? [
+          {
+            label: t`Board members`,
+            action: () => openModal("BOARD_MEMBERS", boardPublicId),
+            icon: (
+              <HiOutlineUserGroup className="h-[16px] w-[16px] text-dark-900" />
+            ),
           },
         ]
       : []),
