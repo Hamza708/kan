@@ -3,8 +3,8 @@ import {
   HiEllipsisHorizontal,
   HiLink,
   HiOutlineDocumentDuplicate,
-  HiOutlineTrash,
   HiOutlineStar,
+  HiOutlineTrash,
   HiStar,
 } from "react-icons/hi2";
 
@@ -65,7 +65,7 @@ export default function BoardDropdown({
       });
     },
   });
-  
+
   const items = [
     ...(isTemplate && canCreateBoard
       ? [
@@ -88,9 +88,7 @@ export default function BoardDropdown({
         ]
       : []),
     {
-      label: isFavorite
-        ? t`Remove from favorites`
-        : t`Add to favorites`,
+      label: isFavorite ? t`Remove from favorites` : t`Add to favorites`,
       action: handleToggleFavorite,
       icon: isFavorite ? (
         <HiStar className="h-[16px] w-[16px] text-dark-900" />
@@ -103,12 +101,13 @@ export default function BoardDropdown({
           {
             label: isTemplate ? t`Delete template` : t`Delete board`,
             action: () => openModal("DELETE_BOARD"),
-            icon: <HiOutlineTrash className="h-[16px] w-[16px] text-dark-900" />,
+            icon: (
+              <HiOutlineTrash className="h-[16px] w-[16px] text-dark-900" />
+            ),
           },
         ]
       : []),
   ];
-  
 
   if (items.length === 0) {
     return null;

@@ -1,8 +1,8 @@
-import { and, count, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNull, lt } from "drizzle-orm";
 
 import type { dbClient } from "@kan/db/client";
 import type { NotificationType } from "@kan/db/schema";
-import { notifications } from "@kan/db/schema";
+import { cards, notifications, workspaces } from "@kan/db/schema";
 import { generateUID } from "@kan/shared/utils";
 
 export const create = async (
@@ -94,5 +94,98 @@ export const getUnreadCount = async (
     );
 
   return result[0]?.count ?? 0;
+};
+
+export const listByUserId = async (
+  db: dbClient,
+  userId: string,
+  options: { limit?: number; cursor?: number } = {},
+) => {
+  const limit = Math.min(options.limit ?? 30, 50);
+
+  const conditions = [
+    eq(notifications.userId, userId),
+    isNull(notifications.deletedAt),
+  ];
+  if (options.cursor != null) {
+    conditions.push(lt(notifications.id, options.cursor));
+  }
+
+  const rows = await db
+    .select({
+      id: notifications.id,
+      publicId: notifications.publicId,
+      type: notifications.type,
+      cardId: notifications.cardId,
+      commentId: notifications.commentId,
+      workspaceId: notifications.workspaceId,
+      metadata: notifications.metadata,
+      readAt: notifications.readAt,
+      createdAt: notifications.createdAt,
+      cardPublicId: cards.publicId,
+      cardTitle: cards.title,
+      workspacePublicId: workspaces.publicId,
+      workspaceName: workspaces.name,
+    })
+    .from(notifications)
+    .leftJoin(cards, eq(notifications.cardId, cards.id))
+    .leftJoin(workspaces, eq(notifications.workspaceId, workspaces.id))
+    .where(and(...conditions))
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit + 1);
+
+  const nextCursor =
+    rows.length > limit ? rows[limit - 1]?.id ?? undefined : undefined;
+  const items = rows.slice(0, limit).map((row) => ({
+    id: row.id,
+    publicId: row.publicId,
+    type: row.type,
+    cardId: row.cardId,
+    commentId: row.commentId,
+    workspaceId: row.workspaceId,
+    metadata: row.metadata,
+    readAt: row.readAt,
+    createdAt: row.createdAt,
+    card: row.cardPublicId
+      ? { publicId: row.cardPublicId, title: row.cardTitle ?? "" }
+      : null,
+    workspace: row.workspacePublicId
+      ? { publicId: row.workspacePublicId, name: row.workspaceName ?? "" }
+      : null,
+  }));
+
+  return { items, nextCursor };
+};
+
+export const markAllAsRead = async (db: dbClient, userId: string) => {
+  await db
+    .update(notifications)
+    .set({ readAt: new Date() })
+    .where(
+      and(
+        eq(notifications.userId, userId),
+        isNull(notifications.readAt),
+        isNull(notifications.deletedAt),
+      ),
+    );
+};
+
+export const getCardPublicIdsWithUnreadMention = async (
+  db: dbClient,
+  userId: string,
+): Promise<string[]> => {
+  const rows = await db
+    .selectDistinct({ publicId: cards.publicId })
+    .from(notifications)
+    .innerJoin(cards, eq(notifications.cardId, cards.id))
+    .where(
+      and(
+        eq(notifications.userId, userId),
+        eq(notifications.type, "mention"),
+        isNull(notifications.readAt),
+        isNull(notifications.deletedAt),
+      ),
+    );
+  return rows.map((r) => r.publicId);
 };
 
