@@ -94,12 +94,13 @@ export async function sendMentionEmails({
             return;
           }
 
-          // Create notification record
+          // Create notification record (store mentioner name for display)
           await notificationRepo.create(db, {
             type: "mention",
             userId,
             cardId,
             commentId,
+            metadata: JSON.stringify({ actorName: commenterName }),
           });
 
           // Send email

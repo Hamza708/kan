@@ -129,6 +129,11 @@ export default function BoardPage({ isTemplate }: { isTemplate?: boolean }) {
     placeholderData: keepPreviousData,
   });
 
+  const { data: mentionedCardIds = [] } =
+    api.notification.getMentionedCardIds.useQuery(undefined, {
+      enabled: !!boardId,
+    });
+
   const refetchBoard = async () => {
     if (boardId) await utils.board.byId.refetch({ boardPublicId: boardId });
   };
@@ -620,6 +625,9 @@ export default function BoardPage({ isTemplate }: { isTemplate?: boolean }) {
                                             comments={card.comments ?? []}
                                             attachments={card.attachments}
                                             dueDate={card.dueDate ?? null}
+                                            hasUnreadMention={mentionedCardIds.includes(
+                                              card.publicId,
+                                            )}
                                           />
                                         </Link>
                                       )}

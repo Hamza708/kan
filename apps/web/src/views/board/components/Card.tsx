@@ -1,10 +1,12 @@
 import { format, isBefore, isSameYear, startOfDay } from "date-fns";
+import { t } from "@lingui/core/macro";
 import { HiOutlinePaperClip } from "react-icons/hi";
 import {
   HiBars3BottomLeft,
   HiChatBubbleLeft,
   HiOutlineClock,
 } from "react-icons/hi2";
+import { TbAt } from "react-icons/tb";
 import { twMerge } from "tailwind-merge";
 
 import Avatar from "~/components/Avatar";
@@ -23,6 +25,7 @@ const Card = ({
   comments,
   attachments,
   dueDate,
+  hasUnreadMention,
 }: {
   title: string;
   labels: { name: string; colourCode: string | null }[];
@@ -45,6 +48,7 @@ const Card = ({
   comments: { publicId: string }[];
   attachments?: { publicId: string }[];
   dueDate?: Date | null;
+  hasUnreadMention?: boolean;
 }) => {
   const { dateLocale } = useLocalisation();
   const showYear = dueDate ? !isSameYear(dueDate, new Date()) : false;
@@ -67,7 +71,18 @@ const Card = ({
 
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-light-200 bg-light-50 px-3 py-2 text-sm text-neutral-900 dark:border-dark-200 dark:bg-dark-200 dark:text-dark-1000 dark:hover:bg-dark-300">
-      <span className="break-words">{title}</span>
+      <div className="flex items-start justify-between gap-2">
+        <span className="min-w-0 flex-1 break-words">{title}</span>
+        {hasUnreadMention && (
+          <span
+            className="flex shrink-0 items-center gap-1 rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
+            title={t`You're mentioned on this card`}
+          >
+            <TbAt className="h-3.5 w-3.5" aria-hidden />
+            {t`Mentioned`}
+          </span>
+        )}
+      </div>
       {labels.length ||
       members.length ||
       checklists.length > 0 ||

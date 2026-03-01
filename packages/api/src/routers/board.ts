@@ -153,24 +153,24 @@ export const boardRouter = createTRPCRouter({
       // Generate presigned URLs for workspace member avatars
       const workspaceWithAvatarUrls = result.workspace
         ? {
-            ...result.workspace,
-            members: await Promise.all(
-              result.workspace.members.map(async (member) => {
-                if (!member.user?.image) {
-                  return member;
-                }
+          ...result.workspace,
+          members: await Promise.all(
+            result.workspace.members.map(async (member) => {
+              if (!member.user?.image) {
+                return member;
+              }
 
-                const avatarUrl = await generateAvatarUrl(member.user.image);
-                return {
-                  ...member,
-                  user: {
-                    ...member.user,
-                    image: avatarUrl,
-                  },
-                };
-              }),
-            ),
-          }
+              const avatarUrl = await generateAvatarUrl(member.user.image);
+              return {
+                ...member,
+                user: {
+                  ...member.user,
+                  image: avatarUrl,
+                },
+              };
+            }),
+          ),
+        }
         : result.workspace;
 
       // Generate presigned URLs for card member avatars

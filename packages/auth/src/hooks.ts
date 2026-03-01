@@ -5,6 +5,7 @@ import { env } from "next-runtime-env";
 
 import type { dbClient } from "@kan/db/client";
 import * as memberRepo from "@kan/db/repository/member.repo";
+import * as notificationRepo from "@kan/db/repository/notification.repo";
 import * as userRepo from "@kan/db/repository/user.repo";
 import { notificationClient } from "@kan/email";
 import { createEmailUnsubscribeLink, createS3Client } from "@kan/shared";
@@ -157,10 +158,16 @@ export function createMiddlewareHooks(db: dbClient) {
         if (userId && memberPublicId) {
           const member = await memberRepo.getByPublicId(db, memberPublicId);
 
-          if (member?.id) {
+          if (member?.id && member.workspaceId) {
             await memberRepo.acceptInvite(db, {
               memberId: member.id,
               userId,
+            });
+
+            await notificationRepo.create(db, {
+              type: "workspace.member.added",
+              userId,
+              workspaceId: member.workspaceId,
             });
           }
         }

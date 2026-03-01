@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import * as inviteLinkRepo from "@kan/db/repository/inviteLink.repo";
 import * as memberRepo from "@kan/db/repository/member.repo";
+import * as notificationRepo from "@kan/db/repository/notification.repo";
 import * as permissionRepo from "@kan/db/repository/permission.repo";
 import * as subscriptionRepo from "@kan/db/repository/subscription.repo";
 import * as userRepo from "@kan/db/repository/user.repo";
@@ -660,6 +661,12 @@ export const memberRouter = createTRPCRouter({
         role: "member",
         roleId: memberRole?.id ?? null,
         status: "active",
+      });
+
+      await notificationRepo.create(ctx.db, {
+        type: "workspace.member.added",
+        userId: user.id,
+        workspaceId: invite.workspaceId,
       });
 
       return {
