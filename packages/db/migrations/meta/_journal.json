@@ -197,6 +197,20 @@
       "when": 1771192000000,
       "tag": "20260129210000_AddWorkspaceWebhooks",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1730203200000,
+      "tag": "20260228140000_AddBoardMembersTable",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1730203300000,
+      "tag": "20260228150000_DisableRLSOnBoardMembers",
+      "breakpoints": true
     }
   ]
 }

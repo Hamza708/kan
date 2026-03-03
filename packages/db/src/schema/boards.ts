@@ -68,7 +68,50 @@ export const boards = pgTable(
   ],
 ).enableRLS();
 
+export const boardMembers = pgTable(
+  "board_members",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    publicId: varchar("publicId", { length: 12 }).notNull().unique(),
+    boardId: bigint("boardId", { mode: "number" })
+      .notNull()
+      .references(() => boards.id, { onDelete: "cascade" }),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdBy: uuid("createdBy").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    deletedAt: timestamp("deletedAt"),
+    deletedBy: uuid("deletedBy").references(() => users.id, {
+      onDelete: "set null",
+    }),
+  },
+  (table) => [
+    index("board_members_board_idx").on(table.boardId),
+    index("board_members_user_idx").on(table.userId),
+    uniqueIndex("board_members_board_user_unique")
+      .on(table.boardId, table.userId)
+      .where(sql`${table.deletedAt} IS NULL`),
+  ],
+);
+
+export const boardMembersRelations = relations(boardMembers, ({ one }) => ({
+  board: one(boards, {
+    fields: [boardMembers.boardId],
+    references: [boards.id],
+    relationName: "boardMembersBoard",
+  }),
+  user: one(users, {
+    fields: [boardMembers.userId],
+    references: [users.id],
+    relationName: "boardMembersUser",
+  }),
+}));
+
 export const boardsRelations = relations(boards, ({ one, many }) => ({
+  members: many(boardMembers),
   userFavorites: many(userBoardFavorites),
   createdBy: one(users, {
     fields: [boards.createdBy],

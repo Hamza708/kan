@@ -17,15 +17,21 @@ type NotificationType =
   | "mention"
   | "workspace.member.added"
   | "workspace.member.removed"
-  | "workspace.role.changed";
+  | "workspace.role.changed"
+  | "board.member.added";
 
 function getNotificationMessage(
   type: NotificationType,
   cardTitle?: string | null,
   workspaceName?: string | null,
   actorName?: string | null,
+  metadata?: { boardName?: string } | null,
 ) {
   switch (type) {
+    case "board.member.added":
+      return metadata?.boardName
+        ? t`You were added to board "${metadata.boardName}"`
+        : t`You were added to a board`;
     case "mention": {
       const who = actorName?.trim() || null;
       if (who && cardTitle)
@@ -55,9 +61,13 @@ function getNotificationLink(
   type: NotificationType,
   cardPublicId?: string | null,
   workspacePublicId?: string | null,
+  metadata?: { boardPublicId?: string } | null,
 ) {
   if (type === "mention" && cardPublicId) {
     return `/cards/${cardPublicId}`;
+  }
+  if (type === "board.member.added" && metadata?.boardPublicId) {
+    return `/boards/${metadata.boardPublicId}`;
   }
   if (
     (type === "workspace.member.added" ||
@@ -170,16 +180,30 @@ export default function NotificationDropdown({
                 ) : (
                   <ul className="py-1">
                     {items.map((item) => {
+                      const metadata =
+                        item.metadata && item.type === "board.member.added"
+                          ? (() => {
+                              try {
+                                return JSON.parse(
+                                  item.metadata!,
+                                ) as { boardPublicId?: string; boardName?: string };
+                              } catch {
+                                return null;
+                              }
+                            })()
+                          : null;
                       const link = getNotificationLink(
                         item.type,
                         item.card?.publicId,
                         item.workspace?.publicId,
+                        metadata,
                       );
                       const message = getNotificationMessage(
                         item.type,
                         item.card?.title,
                         item.workspace?.name,
                         item.actorName,
+                        metadata,
                       );
                       const isUnread = !item.readAt;
 

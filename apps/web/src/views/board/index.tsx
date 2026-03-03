@@ -34,6 +34,7 @@ import { useWorkspace } from "~/providers/workspace";
 import { api } from "~/utils/api";
 import { formatToArray } from "~/utils/helpers";
 import BoardDropdown from "./components/BoardDropdown";
+import BoardMembersModal from "./components/BoardMembersModal";
 import Card from "./components/Card";
 import { DeleteBoardConfirmation } from "./components/DeleteBoardConfirmation";
 import { DeleteListConfirmation } from "./components/DeleteListConfirmation";
@@ -377,6 +378,19 @@ export default function BoardPage({ isTemplate }: { isTemplate?: boolean }) {
             queryParams={queryParams}
           />
         </Modal>
+
+        {isOpen && modalContentType === "BOARD_MEMBERS" && boardData && (
+          <BoardMembersModal
+            boardPublicId={(entityId as string) || boardId ?? ""}
+            workspaceMembers={boardData.workspace.members
+              .filter((m): m is typeof m & { user: NonNullable<typeof m.user> } => m.user !== null)
+              .map((m) => ({
+                publicId: m.publicId,
+                email: m.email,
+                user: m.user,
+              }))}
+          />
+        )}
 
         <Modal
           modalSize="sm"

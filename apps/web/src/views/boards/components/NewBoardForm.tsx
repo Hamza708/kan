@@ -87,12 +87,13 @@ export function NewBoardForm({ isTemplate }: { isTemplate?: boolean }) {
 
       await refetchBoards();
     },
-    onError: () => {
+    onError: (err) => {
       showPopup({
-        header: t`Error`,
-        message: t`Failed to create board`,
+        header: t`Unable to create board`,
+        message: err.message ?? t`Please try again or run: pnpm db:migrate`,
         icon: "error",
       });
+      closeModal();
     },
   });
 

@@ -1,11 +1,14 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import * as boardMemberRepo from "@kan/db/repository/boardMember.repo";
 import * as boardRepo from "@kan/db/repository/board.repo";
 import * as cardRepo from "@kan/db/repository/card.repo";
 import * as activityRepo from "@kan/db/repository/cardActivity.repo";
 import * as labelRepo from "@kan/db/repository/label.repo";
 import * as listRepo from "@kan/db/repository/list.repo";
+import * as memberRepo from "@kan/db/repository/member.repo";
+import * as notificationRepo from "@kan/db/repository/notification.repo";
 import * as workspaceRepo from "@kan/db/repository/workspace.repo";
 import { colours } from "@kan/shared/constants";
 import {
@@ -124,6 +127,18 @@ export const boardRouter = createTRPCRouter({
         });
 
       await assertPermission(ctx.db, userId, board.workspaceId, "board:view");
+
+      const isBoardMember = await boardMemberRepo.isMember(
+        ctx.db,
+        board.id,
+        userId,
+      );
+      if (!isBoardMember) {
+        throw new TRPCError({
+          message: `Board with public ID ${input.boardPublicId} not found`,
+          code: "NOT_FOUND",
+        });
+      }
 
       // Convert semantic string filters to date ranges expected by the repo
       const dueDateFilters = input.dueDateFilters
@@ -384,6 +399,20 @@ export const boardRouter = createTRPCRouter({
           sourceBoardId: sourceBoardInfo.id,
         });
 
+        try {
+          await boardMemberRepo.add(ctx.db, {
+            boardId: result.id,
+            userId,
+            createdBy: userId,
+          });
+        } catch (err) {
+          throw new TRPCError({
+            message:
+              "Board creation failed. Run database migrations: pnpm db:migrate",
+            code: "INTERNAL_SERVER_ERROR",
+            cause: err,
+          });
+        }
         return result;
       }
 
@@ -412,6 +441,21 @@ export const boardRouter = createTRPCRouter({
           message: `Failed to create board`,
           code: "INTERNAL_SERVER_ERROR",
         });
+
+      try {
+        await boardMemberRepo.add(ctx.db, {
+          boardId: result.id,
+          userId,
+          createdBy: userId,
+        });
+      } catch (err) {
+        throw new TRPCError({
+          message:
+            "Board creation failed. Run database migrations: pnpm db:migrate",
+          code: "INTERNAL_SERVER_ERROR",
+          cause: err,
+        });
+      }
 
       if (input.lists.length) {
         const listInputs = input.lists.map((list, index) => ({
@@ -682,5 +726,186 @@ export const boardRouter = createTRPCRouter({
       return {
         isReserved: !isBoardSlugAvailable,
       };
+    }),
+  addMember: protectedProcedure
+    .input(
+      z.object({
+        boardPublicId: z.string().min(12),
+        memberPublicId: z.string().min(12),
+      }),
+    )
+    .output(z.object({ success: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user?.id;
+      if (!userId)
+        throw new TRPCError({
+          message: "User not authenticated",
+          code: "UNAUTHORIZED",
+        });
+
+      const board = await boardRepo.getWorkspaceAndBoardIdByBoardPublicId(
+        ctx.db,
+        input.boardPublicId,
+      );
+      if (!board)
+        throw new TRPCError({
+          message: "Board not found",
+          code: "NOT_FOUND",
+        });
+
+      await assertPermission(ctx.db, userId, board.workspaceId, "board:edit");
+      const isMember = await boardMemberRepo.isMember(
+        ctx.db,
+        board.id,
+        userId,
+      );
+      if (!isMember)
+        throw new TRPCError({
+          message: "You must be a board member to add members",
+          code: "FORBIDDEN",
+        });
+
+      const member = await memberRepo.getByPublicId(ctx.db, input.memberPublicId);
+      if (!member || member.workspaceId !== board.workspaceId)
+        throw new TRPCError({
+          message: "Member not found in this workspace",
+          code: "NOT_FOUND",
+        });
+      if (!member.userId)
+        throw new TRPCError({
+          message: "Cannot add pending invite to board",
+          code: "BAD_REQUEST",
+        });
+      if (member.deletedAt || member.status !== "active")
+        throw new TRPCError({
+          message: "Member is not active",
+          code: "BAD_REQUEST",
+        });
+
+      const alreadyOnBoard = await boardMemberRepo.isMember(
+        ctx.db,
+        board.id,
+        member.userId,
+      );
+      if (alreadyOnBoard)
+        throw new TRPCError({
+          message: "User is already a board member",
+          code: "CONFLICT",
+        });
+
+      await boardMemberRepo.add(ctx.db, {
+        boardId: board.id,
+        userId: member.userId,
+        createdBy: userId,
+      });
+
+      await notificationRepo.create(ctx.db, {
+        type: "board.member.added",
+        userId: member.userId,
+        workspaceId: board.workspaceId,
+        metadata: JSON.stringify({
+          boardPublicId: board.publicId,
+          boardName: board.name,
+        }),
+      });
+
+      return { success: true };
+    }),
+  removeMember: protectedProcedure
+    .input(
+      z.object({
+        boardPublicId: z.string().min(12),
+        userId: z.string().uuid(),
+      }),
+    )
+    .output(z.object({ success: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user?.id;
+      if (!userId)
+        throw new TRPCError({
+          message: "User not authenticated",
+          code: "UNAUTHORIZED",
+        });
+
+      const board = await boardRepo.getWorkspaceAndBoardIdByBoardPublicId(
+        ctx.db,
+        input.boardPublicId,
+      );
+      if (!board)
+        throw new TRPCError({
+          message: "Board not found",
+          code: "NOT_FOUND",
+        });
+
+      await assertPermission(ctx.db, userId, board.workspaceId, "board:edit");
+
+      await boardMemberRepo.remove(ctx.db, {
+        boardId: board.id,
+        userId: input.userId,
+        deletedBy: userId,
+      });
+      return { success: true };
+    }),
+  listMembers: protectedProcedure
+    .input(z.object({ boardPublicId: z.string().min(12) }))
+    .output(
+      z.array(
+        z.object({
+          id: z.number(),
+          publicId: z.string(),
+          userId: z.string(),
+          createdAt: z.date(),
+          user: z.object({
+            id: z.string(),
+            name: z.string().nullable(),
+            email: z.string(),
+            image: z.string().nullable(),
+          }),
+        }),
+      ),
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.user?.id;
+      if (!userId)
+        throw new TRPCError({
+          message: "User not authenticated",
+          code: "UNAUTHORIZED",
+        });
+
+      const board = await boardRepo.getWorkspaceAndBoardIdByBoardPublicId(
+        ctx.db,
+        input.boardPublicId,
+      );
+      if (!board)
+        throw new TRPCError({
+          message: "Board not found",
+          code: "NOT_FOUND",
+        });
+
+      await assertPermission(ctx.db, userId, board.workspaceId, "board:view");
+      const isMember = await boardMemberRepo.isMember(
+        ctx.db,
+        board.id,
+        userId,
+      );
+      if (!isMember)
+        throw new TRPCError({
+          message: "You must be a board member to view members",
+          code: "NOT_FOUND",
+        });
+
+      const members = await boardMemberRepo.getByBoardId(ctx.db, board.id);
+      return members.map((m) => ({
+        id: m.id,
+        publicId: m.publicId,
+        userId: m.userId,
+        createdAt: m.createdAt,
+        user: {
+          id: m.user.id,
+          name: m.user.name,
+          email: m.user.email,
+          image: m.user.image,
+        },
+      }));
     }),
 });
