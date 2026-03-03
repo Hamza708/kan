@@ -54,9 +54,9 @@ function getNotificationMessage(
         ? `You were removed from workspace "${workspaceName}"`
         : "You were removed from a workspace";
     case "workspace.role.changed":
-      return t`Your role was changed`;
+      return "Your role was changed";
     default:
-      return t`Notification`;
+      return "Notification";
   }
 }
 
