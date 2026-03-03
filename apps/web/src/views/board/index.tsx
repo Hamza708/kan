@@ -381,7 +381,7 @@ export default function BoardPage({ isTemplate }: { isTemplate?: boolean }) {
 
         {isOpen && modalContentType === "BOARD_MEMBERS" && boardData && (
           <BoardMembersModal
-            boardPublicId={(entityId as string) || boardId ?? ""}
+            boardPublicId={((entityId as string) || boardId) ?? ""}
             workspaceMembers={boardData.workspace.members
               .filter((m): m is typeof m & { user: NonNullable<typeof m.user> } => m.user !== null)
               .map((m) => ({

@@ -20,36 +20,39 @@ type NotificationType =
   | "workspace.role.changed"
   | "board.member.added";
 
+/**
+ * Uses plain template literals so messages render correctly in production (Vercel).
+ * Lingui t`...` with variables can show raw placeholders like {who} when catalogs
+ * aren't loaded or compiled for the build.
+ */
 function getNotificationMessage(
   type: NotificationType,
   cardTitle?: string | null,
   workspaceName?: string | null,
   actorName?: string | null,
   metadata?: { boardName?: string } | null,
-) {
+): string {
   switch (type) {
     case "board.member.added":
       return metadata?.boardName
-        ? t`You were added to board "${metadata.boardName}"`
-        : t`You were added to a board`;
+        ? `You were added to board "${metadata.boardName}"`
+        : "You were added to a board";
     case "mention": {
       const who = actorName?.trim() || null;
-      if (who && cardTitle)
-        return t`${who} mentioned you in "${cardTitle}"`;
-      if (who)
-        return t`${who} mentioned you in a card`;
+      if (who && cardTitle) return `${who} mentioned you in "${cardTitle}"`;
+      if (who) return `${who} mentioned you in a card`;
       return cardTitle
-        ? t`Someone mentioned you in "${cardTitle}"`
-        : t`Someone mentioned you in a card`;
+        ? `Someone mentioned you in "${cardTitle}"`
+        : "Someone mentioned you in a card";
     }
     case "workspace.member.added":
       return workspaceName
-        ? t`You were added to workspace "${workspaceName}"`
-        : t`You were added to a workspace`;
+        ? `You were added to workspace "${workspaceName}"`
+        : "You were added to a workspace";
     case "workspace.member.removed":
       return workspaceName
-        ? t`You were removed from workspace "${workspaceName}"`
-        : t`You were removed from a workspace`;
+        ? `You were removed from workspace "${workspaceName}"`
+        : "You were removed from a workspace";
     case "workspace.role.changed":
       return t`Your role was changed`;
     default:
