@@ -6,7 +6,6 @@ import {
   HiChatBubbleLeft,
   HiOutlineClock,
 } from "react-icons/hi2";
-import { TbAt } from "react-icons/tb";
 import { twMerge } from "tailwind-merge";
 
 import Avatar from "~/components/Avatar";
@@ -75,12 +74,10 @@ const Card = ({
         <span className="min-w-0 flex-1 break-words">{title}</span>
         {hasUnreadMention && (
           <span
-            className="flex shrink-0 items-center gap-1 rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
+            className="h-2 w-2 shrink-0 rounded-full bg-red-500"
             title={t`You're mentioned on this card`}
-          >
-            <TbAt className="h-3.5 w-3.5" aria-hidden />
-            {t`Mentioned`}
-          </span>
+            aria-label={t`You're mentioned on this card`}
+          />
         )}
       </div>
       {labels.length ||
