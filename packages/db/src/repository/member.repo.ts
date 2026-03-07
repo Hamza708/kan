@@ -107,6 +107,20 @@ export const getByEmailAndStatus = async (
   });
 };
 
+export const getByEmailAndWorkspaceId = async (
+  db: dbClient,
+  email: string,
+  workspaceId: number,
+) => {
+  return db.query.workspaceMembers.findFirst({
+    where: and(
+      eq(workspaceMembers.email, email),
+      eq(workspaceMembers.workspaceId, workspaceId),
+      isNull(workspaceMembers.deletedAt),
+    ),
+  });
+};
+
 export const acceptInvite = async (
   db: dbClient,
   args: { memberId: number; userId: string },

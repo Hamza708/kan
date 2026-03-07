@@ -54,7 +54,7 @@ export default function BoardPage({ isTemplate }: { isTemplate?: boolean }) {
   const router = useRouter();
   const utils = api.useUtils();
   const { showPopup } = usePopup();
-  const { workspace } = useWorkspace();
+  const { workspace, availableWorkspaces, setWorkspaceFromPage } = useWorkspace();
   const { openModal, modalContentType, entityId, isOpen } = useModal();
   const [selectedPublicListId, setSelectedPublicListId] =
     useState<PublicListId>("");
@@ -144,6 +144,31 @@ export default function BoardPage({ isTemplate }: { isTemplate?: boolean }) {
       setIsInitialLoading(false);
     }
   }, [boardId]);
+
+  // When viewing a board, sync workspace context to the board's workspace so
+  // permissions (e.g. card:create) are correct. Fixes added users not being able
+  // to add the first card when they open the board via a link (wrong workspace was in context).
+  useEffect(() => {
+    const boardWorkspacePublicId = boardData?.workspace?.publicId;
+    if (
+      !boardWorkspacePublicId ||
+      boardWorkspacePublicId === workspace.publicId ||
+      availableWorkspaces.length === 0
+    ) {
+      return;
+    }
+    const boardWorkspace = availableWorkspaces.find(
+      (w) => w.publicId === boardWorkspacePublicId,
+    );
+    if (boardWorkspace) {
+      setWorkspaceFromPage(boardWorkspace);
+    }
+  }, [
+    boardData?.workspace?.publicId,
+    workspace.publicId,
+    availableWorkspaces,
+    setWorkspaceFromPage,
+  ]);
 
   const isLoading = isInitialLoading || isQueryLoading;
 

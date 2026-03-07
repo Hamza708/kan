@@ -29,12 +29,8 @@ export default function BoardDropdown({
   boardName?: string;
 }) {
   const { openModal } = useModal();
-  const {
-    canEditBoard,
-    canDeleteBoard,
-    canCreateBoard,
-    hasPermission,
-  } = usePermissions();
+  const { canEditBoard, canDeleteBoard, canCreateBoard, hasPermission } =
+    usePermissions();
   const { showPopup } = usePopup();
   const utils = api.useUtils();
 

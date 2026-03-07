@@ -479,6 +479,7 @@ export const getWithListAndMembersByPublicId = async (
         with: {
           board: {
             columns: {
+              id: true,
               publicId: true,
               name: true,
             },

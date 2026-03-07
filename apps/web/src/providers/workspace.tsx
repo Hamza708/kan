@@ -9,6 +9,8 @@ interface WorkspaceContextProps {
   isLoading: boolean;
   hasLoaded: boolean;
   switchWorkspace: (_workspace: Workspace) => void;
+  /** Set current workspace without navigating (e.g. when viewing a board from another workspace). */
+  setWorkspaceFromPage: (_workspace: Workspace) => void;
   availableWorkspaces: Workspace[];
 }
 
@@ -60,6 +62,11 @@ export const WorkspaceProvider: React.FC<{ children: ReactNode }> = ({
     void utils.workspace.all.refetch();
 
     router.push(`/boards`);
+  };
+
+  const setWorkspaceFromPage = (_workspace: Workspace) => {
+    localStorage.setItem("workspacePublicId", _workspace.publicId);
+    setWorkspace(_workspace);
   };
 
   useEffect(() => {
@@ -131,6 +138,7 @@ export const WorkspaceProvider: React.FC<{ children: ReactNode }> = ({
         hasLoaded,
         availableWorkspaces,
         switchWorkspace,
+        setWorkspaceFromPage,
       }}
     >
       {children}
