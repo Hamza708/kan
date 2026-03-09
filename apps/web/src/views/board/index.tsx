@@ -538,6 +538,7 @@ export default function BoardPage({ isTemplate }: { isTemplate?: boolean }) {
               isTemplate={!!isTemplate}
               isLoading={!boardData}
               boardPublicId={boardId ?? ""}
+              boardKind={boardData?.kind ?? "internal"}
               workspacePublicId={workspace.publicId}
               isFavorite={boardData?.favorite}
               boardName={boardData?.name}

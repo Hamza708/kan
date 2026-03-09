@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm";
 
 import type { dbClient } from "@kan/db/client";
-import type { BoardVisibilityStatus } from "@kan/db/schema";
+import type { BoardKind, BoardVisibilityStatus } from "@kan/db/schema";
 import {
   boardMembers,
   boards,
@@ -70,6 +70,7 @@ export const getAllByWorkspaceId = async (
     columns: {
       publicId: true,
       name: true,
+      kind: true,
     },
     with: {
       userFavorites: {
@@ -214,6 +215,7 @@ export const getByPublicId = async (
       name: true,
       slug: true,
       visibility: true,
+      kind: true,
     },
     with: {
       userFavorites: {
@@ -646,6 +648,7 @@ export const update = async (
     name: string | undefined;
     slug: string | undefined;
     visibility: BoardVisibilityStatus | undefined;
+    kind: BoardKind | undefined;
     boardPublicId: string;
   },
 ) => {
@@ -655,6 +658,7 @@ export const update = async (
       name: boardInput.name,
       slug: boardInput.slug,
       visibility: boardInput.visibility,
+      kind: boardInput.kind,
       updatedAt: new Date(),
     })
     .where(eq(boards.publicId, boardInput.boardPublicId))

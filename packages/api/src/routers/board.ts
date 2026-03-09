@@ -505,7 +505,8 @@ export const boardRouter = createTRPCRouter({
           .regex(/^(?![-]+$)[a-zA-Z0-9-]+$/)
           .optional(),
         visibility: z.enum(["public", "private"]).optional(),
-        favorite: z.boolean().optional()
+        favorite: z.boolean().optional(),
+        kind: z.enum(["internal", "external"]).optional(),
       }),
     )
     .output(z.object({ success: z.boolean() }).or(z.custom<Awaited<ReturnType<typeof boardRepo.update>>>()))
@@ -546,8 +547,12 @@ export const boardRouter = createTRPCRouter({
         }
       }
 
-      // Handle other updates (name, slug, visibility)
-      const hasOtherUpdates = input.name || input.slug || input.visibility !== undefined;
+      // Handle other updates (name, slug, visibility, kind)
+      const hasOtherUpdates =
+        input.name ||
+        input.slug ||
+        input.visibility !== undefined ||
+        input.kind !== undefined;
 
       if (!hasOtherUpdates) {
         // Only favorite was updated, return success
@@ -574,6 +579,7 @@ export const boardRouter = createTRPCRouter({
         slug: input.slug,
         boardPublicId: input.boardPublicId,
         visibility: input.visibility,
+        kind: input.kind,
       });
 
       if (!result)
