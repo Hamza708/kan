@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import * as boardMemberRepo from "@kan/db/repository/boardMember.repo";
 import * as cardRepo from "@kan/db/repository/card.repo";
 import * as cardActivityRepo from "@kan/db/repository/cardActivity.repo";
 import * as cardCommentRepo from "@kan/db/repository/cardComment.repo";
@@ -700,6 +701,40 @@ export const cardRouter = createTRPCRouter({
           }
         : result.list.board.workspace;
 
+      // Workspace members who are on this board only (for @ mention dropdown in comments)
+      const boardMembersForMentions =
+        await boardMemberRepo.getWorkspaceMembersByBoardId(
+          ctx.db,
+          result.list.board.id,
+        );
+      const boardMembersForMentionsWithAvatars = await Promise.all(
+        boardMembersForMentions.map(async (member) => {
+          if (!member.user?.image) {
+            return {
+              publicId: member.publicId,
+              email: member.email,
+              user: member.user
+                ? {
+                    id: member.user.id,
+                    name: member.user.name ?? null,
+                    image: null,
+                  }
+                : null,
+            };
+          }
+          const avatarUrl = await generateAvatarUrl(member.user.image);
+          return {
+            publicId: member.publicId,
+            email: member.email,
+            user: {
+              id: member.user.id,
+              name: member.user.name ?? null,
+              image: avatarUrl,
+            },
+          };
+        }),
+      );
+
       return {
         ...result,
         attachments: attachmentsWithUrls,
@@ -708,6 +743,7 @@ export const cardRouter = createTRPCRouter({
           board: {
             ...result.list.board,
             workspace: workspaceWithAvatarUrls,
+            boardMembersForMentions: boardMembersForMentionsWithAvatars,
           },
         },
       };

@@ -19,24 +19,24 @@ export default function BoardDropdown({
   isTemplate,
   isLoading,
   boardPublicId,
+  boardKind,
   isFavorite,
   boardName,
 }: {
   isTemplate: boolean;
   isLoading: boolean;
   boardPublicId: string;
+  boardKind?: "internal" | "external";
   isFavorite?: boolean;
   boardName?: string;
 }) {
   const { openModal } = useModal();
-  const {
-    canEditBoard,
-    canDeleteBoard,
-    canCreateBoard,
-    hasPermission,
-  } = usePermissions();
+  const { canEditBoard, canDeleteBoard, canCreateBoard, hasPermission } =
+    usePermissions();
   const { showPopup } = usePopup();
   const utils = api.useUtils();
+
+  const isExternal = boardKind === "external";
 
   const handleToggleFavorite = () => {
     updateBoard.mutate({
@@ -90,6 +90,17 @@ export default function BoardDropdown({
             label: t`Edit board URL`,
             action: () => openModal("UPDATE_BOARD_SLUG"),
             icon: <HiLink className="h-[16px] w-[16px] text-dark-900" />,
+          },
+          {
+            label: isExternal ? t`Mark as internal board` : t`Mark as external board`,
+            action: () =>
+              updateBoard.mutate({
+                boardPublicId,
+                kind: isExternal ? "internal" : "external",
+              }),
+            icon: (
+              <HiOutlineDocumentDuplicate className="h-[16px] w-[16px] text-dark-900" />
+            ),
           },
         ]
       : []),

@@ -1,7 +1,7 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import type { dbClient } from "@kan/db/client";
-import { boardMembers } from "@kan/db/schema";
+import { boardMembers, boards, workspaceMembers } from "@kan/db/schema";
 import { generateUID } from "@kan/shared/utils";
 
 export const add = async (
@@ -79,5 +79,57 @@ export const getByBoardId = async (db: dbClient, boardId: number) => {
         },
       },
     },
+  });
+};
+
+/**
+ * Returns workspace members who are on the given board (for @ mentions in comments).
+ * Same shape as workspace.members so it can be used in the Editor mention dropdown.
+ */
+export const getWorkspaceMembersByBoardId = async (
+  db: dbClient,
+  boardId: number,
+) => {
+  const board = await db.query.boards.findFirst({
+    columns: { workspaceId: true },
+    where: (b, { eq: eqFn }) => eqFn(b.id, boardId),
+  });
+  if (!board) return [];
+
+  const bmRows = await db
+    .select({ userId: boardMembers.userId })
+    .from(boardMembers)
+    .where(
+      and(
+        eq(boardMembers.boardId, boardId),
+        isNull(boardMembers.deletedAt),
+      ),
+    );
+  const userIds = bmRows.map((r) => r.userId).filter((id): id is string => !!id);
+  if (userIds.length === 0) return [];
+
+  return db.query.workspaceMembers.findMany({
+    columns: {
+      publicId: true,
+      email: true,
+      status: true,
+    },
+    with: {
+      user: {
+        columns: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+    },
+    where: (wm, { eq: eqFn, inArray: inArrayFn, isNull: isNullFn }) =>
+      and(
+        eqFn(wm.workspaceId, board.workspaceId),
+        inArrayFn(wm.userId, userIds),
+        eqFn(wm.status, "active"),
+        isNullFn(wm.deletedAt),
+      ),
   });
 };

@@ -201,8 +201,14 @@ export default function CardPage({ isTemplate }: { isTemplate?: boolean }) {
   const workspaceMembers = board?.workspace.members;
   const boardId = board?.publicId;
 
+  // Use board members only for @ mentions (not all workspace members)
+  const boardWithMentions = board as
+    | { boardMembersForMentions?: { publicId: string; email: string; user: { id: string; name: string | null; image: string | null } | null }[] }
+    | undefined;
+  const membersForMentions =
+    boardWithMentions?.boardMembersForMentions ?? workspaceMembers;
   const editorWorkspaceMembers =
-    workspaceMembers
+    membersForMentions
       ?.filter((member) => member.email)
       .map((member) => ({
         publicId: member.publicId,
@@ -411,7 +417,7 @@ export default function CardPage({ isTemplate }: { isTemplate?: boolean }) {
                           onBlur={
                             canEdit ? () => handleSubmit(onSubmit)() : undefined
                           }
-                          workspaceMembers={workspaceMembers ?? []}
+                          workspaceMembers={editorWorkspaceMembers}
                           readOnly={!canEdit}
                         />
                       </div>

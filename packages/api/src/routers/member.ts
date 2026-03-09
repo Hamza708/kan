@@ -646,22 +646,38 @@ export const memberRouter = createTRPCRouter({
         }
       }
 
-      // Get the workspace role to set roleId
-      const memberRole = await permissionRepo.getRoleByWorkspaceIdAndName(
+      // If there is already an invited row for this email in this workspace,
+      // update it to active instead of creating a duplicate (avoids showing
+      // both "Member" and "Pending" on the Members page).
+      const existingMember = await memberRepo.getByEmailAndWorkspaceId(
         ctx.db,
+        user.email,
         invite.workspaceId,
-        "member",
       );
 
-      await memberRepo.create(ctx.db, {
-        workspaceId: invite.workspaceId,
-        email: user.email,
-        userId: user.id,
-        createdBy: user.id,
-        role: "member",
-        roleId: memberRole?.id ?? null,
-        status: "active",
-      });
+      if (existingMember?.status === "invited") {
+        await memberRepo.acceptInvite(ctx.db, {
+          memberId: existingMember.id,
+          userId: user.id,
+        });
+      } else if (!existingMember) {
+        const memberRole = await permissionRepo.getRoleByWorkspaceIdAndName(
+          ctx.db,
+          invite.workspaceId,
+          "member",
+        );
+
+        await memberRepo.create(ctx.db, {
+          workspaceId: invite.workspaceId,
+          email: user.email,
+          userId: user.id,
+          createdBy: user.id,
+          role: "member",
+          roleId: memberRole?.id ?? null,
+          status: "active",
+        });
+      }
+      // If existingMember.status is "active", we already threw above (isMember check)
 
       await notificationRepo.create(ctx.db, {
         type: "workspace.member.added",

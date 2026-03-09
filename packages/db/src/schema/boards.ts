@@ -31,6 +31,10 @@ export const boardTypes = ["regular", "template"] as const;
 export type BoardType = (typeof boardTypes)[number];
 export const boardTypeEnum = pgEnum("board_type", boardTypes);
 
+export const boardKinds = ["internal", "external"] as const;
+export type BoardKind = (typeof boardKinds)[number];
+export const boardKindEnum = pgEnum("board_kind", boardKinds);
+
 export const boards = pgTable(
   "board",
   {
@@ -56,11 +60,13 @@ export const boards = pgTable(
       .references(() => workspaces.id, { onDelete: "cascade" }),
     visibility: boardVisibilityEnum("visibility").notNull().default("private"),
     type: boardTypeEnum("type").notNull().default("regular"),
+    kind: boardKindEnum("kind").notNull().default("internal"),
     sourceBoardId: bigint("sourceBoardId", { mode: "number" }),
   },
   (table) => [
     index("board_visibility_idx").on(table.visibility),
     index("board_type_idx").on(table.type),
+    index("board_kind_idx").on(table.kind),
     index("board_source_idx").on(table.sourceBoardId),
     uniqueIndex("unique_slug_per_workspace")
       .on(table.workspaceId, table.slug)

@@ -65,20 +65,27 @@ const Comment = ({
     },
   );
 
-  const workspaceMembers: WorkspaceMember[] =
-    cardData?.list.board.workspace.members
-      .filter((member) => member.email)
-      .map((member) => ({
-        publicId: member.publicId,
-        email: member.email,
-        user: member.user
-          ? {
-              id: member.user.id,
-              name: member.user.name ?? null,
-              image: member.user.image ?? null,
-            }
-          : null,
-      })) ?? [];
+  const boardData = cardData?.list.board as
+    | {
+        workspace: { members: { publicId: string; email: string; user: { id: string; name: string | null; image: string | null } | null }[] };
+        boardMembersForMentions?: { publicId: string; email: string; user: { id: string; name: string | null; image: string | null } | null }[];
+      }
+    | undefined;
+  const membersForMentions =
+    boardData?.boardMembersForMentions ?? boardData?.workspace.members ?? [];
+  const workspaceMembers: WorkspaceMember[] = membersForMentions
+    .filter((member) => member.email)
+    .map((member) => ({
+      publicId: member.publicId,
+      email: member.email,
+      user: member.user
+        ? {
+            id: member.user.id,
+            name: member.user.name ?? null,
+            image: member.user.image ?? null,
+          }
+        : null,
+    }));
 
   if (!publicId) return null;
 

@@ -109,6 +109,17 @@ export function BoardsList({ isTemplate }: { isTemplate?: boolean }) {
           >
             <div className="group relative mr-5 flex h-[150px] w-full items-center justify-center rounded-md border border-dashed border-light-400 bg-light-50 shadow-sm hover:bg-light-200 dark:border-dark-600 dark:bg-dark-50 dark:hover:bg-dark-100">
               <PatternedBackground />
+              {!isTemplate && (
+                <div
+                  className={`absolute left-3 top-3 z-10 rounded-full bg-light-200 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide shadow-sm dark:bg-dark-300 ${
+                    board.kind === "external"
+                      ? "text-red-600 dark:text-red-300"
+                      : "text-emerald-600 dark:text-emerald-300"
+                  }`}
+                >
+                  {board.kind === "external" ? t`External` : t`Internal`}
+                </div>
+              )}
                 <button
                   onClick={(e) => handleToggleFavorite(e, board.publicId, board.favorite)}
                   className={`absolute right-3 top-3 z-10 rounded p-1 transition-all hover:bg-light-300 dark:hover:bg-dark-200 ${board.favorite ? "" : "md:opacity-0 md:group-hover:opacity-100"
