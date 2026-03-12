@@ -19,7 +19,7 @@ export const ResetPasswordTemplate = ({
 }) => (
   <Html>
     <Head />
-    <Preview>Reset your Kan password</Preview>
+    <Preview>Reset your workos password</Preview>
     <Body style={{ backgroundColor: "white" }}>
       <Container
         style={{
@@ -39,12 +39,12 @@ export const ResetPasswordTemplate = ({
             color: "#232323",
           }}
         >
-          kan.bn
+          workos
         </Heading>
         <Heading
           style={{ fontSize: "24px", fontWeight: "bold", color: "#232323" }}
         >
-          Reset your Kan password
+          Reset your workos password
         </Heading>
         <Text
           style={{
@@ -96,7 +96,7 @@ export const ResetPasswordTemplate = ({
             target="_blank"
             style={{ color: "#7e7e7e", textDecoration: "underline" }}
           >
-            Kan
+            workos
           </Link>
           , the open source Trello alternative.
         </Text>

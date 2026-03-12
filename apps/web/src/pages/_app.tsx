@@ -5,7 +5,6 @@ import type { NextPage, Viewport } from "next";
 import type { AppProps, AppType } from "next/app";
 import type { ReactElement, ReactNode } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import Head from "next/head";
 import Script from "next/script";
 import { env } from "next-runtime-env";
 import { ThemeProvider } from "next-themes";
@@ -27,7 +26,7 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata = {
   title: "Kan",
   description: "The open source Trello alternative",
-  icons: [{ rel: "icon", url: "/favicon.svg", type: "image/svg+xml" }],
+  icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
 export const viewport: Viewport = {
@@ -65,9 +64,6 @@ const MyApp: AppType = ({ Component, pageProps }: AppPropsWithLayout) => {
 
   return (
     <>
-      <Head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-      </Head>
       <style jsx global>{`
         html {
           font-family: ${jakarta.style.fontFamily};
