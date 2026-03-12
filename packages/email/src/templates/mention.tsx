@@ -46,7 +46,7 @@ export const MentionTemplate = ({
             color: "#232323",
           }}
         >
-          kan.bn
+          workos
         </Heading>
         <Heading
           style={{ fontSize: "24px", fontWeight: "bold", color: "#232323" }}
@@ -95,7 +95,7 @@ export const MentionTemplate = ({
             target="_blank"
             style={{ color: "#7e7e7e", textDecoration: "underline" }}
           >
-            Kan
+            workos
           </Link>
           , the open source Trello alternative.
         </Text>
