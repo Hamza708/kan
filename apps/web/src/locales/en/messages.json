@@ -5179,7 +5179,7 @@
     "translation": "Join workspace"
   },
   "A23Y7X": {
-    "message": "Join workspace | kan.bn",
+    "message": "Join workspace | workos",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -5188,7 +5188,7 @@
         91
       ]
     ],
-    "translation": "Join workspace | kan.bn"
+    "translation": "Join workspace | workos"
   },
   "wM8xd8": {
     "message": "Junior",
@@ -5527,7 +5527,7 @@
     "translation": "Loading..."
   },
   "N/bcWA": {
-    "message": "Login | kan.bn",
+    "message": "Login | workos",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -5536,7 +5536,7 @@
         33
       ]
     ],
-    "translation": "Login | kan.bn"
+    "translation": "Login | workos"
   },
   "nOhz3x": {
     "message": "Logout",
@@ -8005,7 +8005,7 @@
     "translation": "Sign Up"
   },
   "sUZo7y": {
-    "message": "Sign up | kan.bn",
+    "message": "Sign up | workos",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -8018,7 +8018,7 @@
         59
       ]
     ],
-    "translation": "Sign up | kan.bn"
+    "translation": "Sign up | workos"
   },
   "WRkpB1": {
     "message": "Sign up disabled",
@@ -10205,7 +10205,7 @@
     "translation": "You are about to change your password."
   },
   "aelko+": {
-    "message": "You can get a custom workspace URL, like <0>kan.bn/kan</0>, by going into your <1>workspace settings</1> and purchasing a pro workspace subscription. All subscriptions help fund the development of the project!",
+    "message": "You can get a custom workspace URL, like <0>workos/kan</0>, by going into your <1>workspace settings</1> and purchasing a pro workspace subscription. All subscriptions help fund the development of the project!",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -10214,7 +10214,7 @@
         67
       ]
     ],
-    "translation": "You can get a custom workspace URL, like <0>kan.bn/kan</0>, by going into your <1>workspace settings</1> and purchasing a pro workspace subscription. All subscriptions help fund the development of the project!"
+    "translation": "You can get a custom workspace URL, like <0>workos/kan</0>, by going into your <1>workspace settings</1> and purchasing a pro workspace subscription. All subscriptions help fund the development of the project!"
   },
   "kSxwQL": {
     "message": "You can invite team members by clicking the \"Invite\" button in the top right corner of the <0>members page</0> and entering their email address. They will receive an email with a link to join the workspace.",
@@ -10357,7 +10357,7 @@
     ]
   },
   "2SePRT": {
-    "message": "You've been invited to join a workspace on kan.bn.",
+    "message": "You've been invited to join a workspace on workos.",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -10366,7 +10366,7 @@
         134
       ]
     ],
-    "translation": "You've been invited to join a workspace on kan.bn."
+    "translation": "You've been invited to join a workspace on workos."
   },
   "uOqaMC": {
     "message": "You've been invited to join a workspace.",

@@ -189,7 +189,7 @@ export default function UserMenu({
               </Menu.Item>
               <Menu.Item>
                 <Link
-                  href="mailto:support@kan.bn"
+                  href="mailto:support@workos"
                   target="_blank"
                   rel="noreferrer"
                   onClick={handleLinkClick}

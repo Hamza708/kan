@@ -3,7 +3,6 @@ import { Button } from "@react-email/button";
 import { Container } from "@react-email/container";
 import { Head } from "@react-email/head";
 import { Heading } from "@react-email/heading";
-import { Hr } from "@react-email/hr";
 import { Html } from "@react-email/html";
 import { Link } from "@react-email/link";
 import { Preview } from "@react-email/preview";
@@ -81,23 +80,6 @@ export const MagicLinkTemplate = ({
           }}
         >
           If you didn&apos;t try to login, you can safely ignore this email.
-        </Text>
-        <Hr
-          style={{
-            marginTop: "2.5rem",
-            marginBottom: "2rem",
-            borderWidth: "1px",
-          }}
-        />
-        <Text style={{ color: "#7e7e7e" }}>
-          <Link
-            href={env("NEXT_PUBLIC_BASE_URL")}
-            target="_blank"
-            style={{ color: "#7e7e7e", textDecoration: "underline" }}
-          >
-            workos
-          </Link>
-          , the open source Trello alternative.
         </Text>
       </Container>
     </Body>
