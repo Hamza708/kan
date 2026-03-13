@@ -784,7 +784,8 @@ export const boardRouter = createTRPCRouter({
         });
       if (member.deletedAt || member.status !== "active")
         throw new TRPCError({
-          message: "Member is not active",
+          message:
+            "Member must accept the workspace invite before they can be added to a board.",
           code: "BAD_REQUEST",
         });
 

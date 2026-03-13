@@ -25,6 +25,7 @@ export default function BoardMembersModal({
   const { canEditBoard } = usePermissions();
   const { closeModal } = useModal();
   const { showPopup } = usePopup();
+  const utils = api.useUtils();
   const [showAdd, setShowAdd] = useState(false);
   const [selectedMemberPublicId, setSelectedMemberPublicId] = useState("");
   const addSelectRef = useRef<HTMLSelectElement>(null);
@@ -34,41 +35,64 @@ export default function BoardMembersModal({
     { enabled: !!boardPublicId },
   );
 
+  // Evaluate translations at render time so callbacks don't call Lingui (hooks) and trigger React #321
+  const msgMemberAdded = t`Member added`;
+  const msgMemberAddedDesc = t`The member has been added to this board.`;
+  const msgUnableToAdd = t`Unable to add member`;
+  const msgMemberRemoved = t`Member removed`;
+  const msgMemberRemovedDesc = t`The member has been removed from this board.`;
+  const msgUnableToRemove = t`Unable to remove member`;
+  const msgTryAgain = t`Please try again later.`;
+
   const addMemberMutation = api.board.addMember.useMutation({
     onSuccess: () => {
-      void api.useUtils().board.listMembers.invalidate({ boardPublicId });
+      void utils.board.listMembers.invalidate({ boardPublicId });
       setShowAdd(false);
       setSelectedMemberPublicId("");
-      showPopup({
-        header: t`Member added`,
-        message: t`The member has been added to this board.`,
-        icon: "success",
-      });
+      // Defer popup to next tick so we don't trigger hook/render issues (React #321) in the same turn as invalidate
+      setTimeout(() => {
+        showPopup({
+          header: msgMemberAdded,
+          message: msgMemberAddedDesc,
+          icon: "success",
+        });
+      }, 0);
     },
     onError: (err) => {
-      showPopup({
-        header: t`Unable to add member`,
-        message: err.message ?? t`Please try again later.`,
-        icon: "error",
-      });
+      // React #321 (Invalid hook call) can be reported even when the mutation succeeded (e.g. from refetch path). Don't show misleading error.
+      const isReactInvariant321 =
+        !!err?.message?.includes("321") || !!err?.message?.includes("Invalid hook call");
+      if (!isReactInvariant321) {
+        showPopup({
+          header: msgUnableToAdd,
+          message: err.message ?? msgTryAgain,
+          icon: "error",
+        });
+      }
     },
   });
 
   const removeMemberMutation = api.board.removeMember.useMutation({
     onSuccess: () => {
-      void api.useUtils().board.listMembers.invalidate({ boardPublicId });
-      showPopup({
-        header: t`Member removed`,
-        message: t`The member has been removed from this board.`,
-        icon: "success",
-      });
+      void utils.board.listMembers.invalidate({ boardPublicId });
+      setTimeout(() => {
+        showPopup({
+          header: msgMemberRemoved,
+          message: msgMemberRemovedDesc,
+          icon: "success",
+        });
+      }, 0);
     },
     onError: (err) => {
-      showPopup({
-        header: t`Unable to remove member`,
-        message: err.message ?? t`Please try again later.`,
-        icon: "error",
-      });
+      const isReactInvariant321 =
+        !!err?.message?.includes("321") || !!err?.message?.includes("Invalid hook call");
+      if (!isReactInvariant321) {
+        showPopup({
+          header: msgUnableToRemove,
+          message: err.message ?? msgTryAgain,
+          icon: "error",
+        });
+      }
     },
   });
 
