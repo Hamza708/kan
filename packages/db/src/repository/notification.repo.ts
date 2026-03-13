@@ -58,6 +58,12 @@ export const exists = async (
         conditions.push(eq(notifications.workspaceId, args.workspaceId));
       }
 
+      // If a specific comment is provided, de-duplicate at the (user, type, comment) level
+      // so that multiple mentions on the same card but different comments still create notifications.
+      if (args.commentId) {
+        conditions.push(eq(notifications.commentId, args.commentId));
+      }
+
       return and(...conditions);
     },
   });
