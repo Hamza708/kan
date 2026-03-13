@@ -3,6 +3,7 @@ import { Button } from "@react-email/button";
 import { Container } from "@react-email/container";
 import { Head } from "@react-email/head";
 import { Heading } from "@react-email/heading";
+import { Hr } from "@react-email/hr";
 import { Html } from "@react-email/html";
 import { Link } from "@react-email/link";
 import { Preview } from "@react-email/preview";
@@ -81,6 +82,16 @@ export const MentionTemplate = ({
         >
           View Card
         </Button>
+        <Hr
+          style={{
+            marginTop: "2.5rem",
+            marginBottom: "2rem",
+            borderWidth: "1px",
+          }}
+        />
+        <Text style={{ color: "#7e7e7e" }}>
+          Developed by Marketaspex Technology Team.
+        </Text>
       </Container>
     </Body>
   </Html>
