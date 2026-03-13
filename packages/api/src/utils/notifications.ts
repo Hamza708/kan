@@ -82,14 +82,18 @@ export async function sendMentionEmails({
         if (!userId || !email) return;
 
         try {
-          // Check if notification already exists for this mention
+          // Check if notification already exists for this mention.
+          // We de-duplicate per (user, card, comment) so that:
+          // - multiple comments on the same card each generate one notification
+          // - re-editing the same comment doesn't spam duplicates.
           const notificationExists = await notificationRepo.exists(db, {
             userId,
             cardId,
+            commentId,
             type: "mention",
           });
 
-          // If notification already exists, skip sending email
+          // If notification already exists for this comment, skip sending email
           if (notificationExists) {
             return;
           }
