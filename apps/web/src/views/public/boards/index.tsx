@@ -62,7 +62,7 @@ export default function PublicBoardsView() {
 
   return (
     <>
-      <PageHead title={`${data?.name ?? t`Workspace`} | kan.bn`} />
+      <PageHead title={`${data?.name ?? t`Workspace`} | workos`} />
       <style jsx global>{`
         html {
           height: 100vh;
@@ -89,7 +89,7 @@ export default function PublicBoardsView() {
           className="text-lg font-bold tracking-tight text-neutral-900 dark:text-dark-1000"
           href="/"
         >
-          kan.bn
+          workos
         </Link>
       </div>
     </>

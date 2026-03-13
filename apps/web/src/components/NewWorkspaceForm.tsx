@@ -291,7 +291,7 @@ export function NewWorkspaceForm() {
             }
             prefix={
               env("NEXT_PUBLIC_KAN_ENV") === "cloud"
-                ? "kan.bn/"
+                ? "workos/"
                 : `${env("NEXT_PUBLIC_BASE_URL")}/`
             }
             iconRight={

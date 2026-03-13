@@ -50,7 +50,7 @@ const Faqs = () => {
             Importing your Trello boards into Kan is easy. You can follow our
             step-by-step guide{" "}
             <Link
-              href="https://docs.kan.bn/imports/trello"
+              href="https://docs.workos/imports/trello"
               className="underline"
             >
               here
@@ -66,11 +66,11 @@ const Faqs = () => {
         <Text>
           <Trans>
             You can get a custom workspace URL, like{" "}
-            <Link href="https://kan.bn/kan" className="underline">
-              kan.bn/kan
+            <Link href="https://workos/kan" className="underline">
+              workos/kan
             </Link>
             , by going into your{" "}
-            <Link href="https://kan.bn/settings" className="underline">
+            <Link href="https://workos/settings" className="underline">
               workspace settings
             </Link>{" "}
             and purchasing a pro workspace subscription. All subscriptions help
@@ -111,7 +111,7 @@ const Faqs = () => {
           <Trans>
             You can invite team members by clicking the "Invite" button in the
             top right corner of the{" "}
-            <Link href="https://kan.bn/members" className="underline">
+            <Link href="https://workos/members" className="underline">
               members page
             </Link>{" "}
             and entering their email address. They will receive an email with a
@@ -150,7 +150,7 @@ const Faqs = () => {
           <Trans>
             Find answers to common questions about Kan. Can't find what you're
             looking for? Feel free to{" "}
-            <Link href="mailto:support@kan.bn" className="underline">
+            <Link href="mailto:support@workos" className="underline">
               contact us
             </Link>
             .

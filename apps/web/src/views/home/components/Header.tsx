@@ -18,7 +18,7 @@ const Header = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
     { label: t`Pricing`, href: "/pricing" },
     {
       label: t`Docs`,
-      href: "https://docs.kan.bn",
+      href: "https://docs.workos",
       openInNewTab: true,
     },
   ];
@@ -34,12 +34,12 @@ const Header = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
     { label: t`Pricing`, href: "/pricing", group: "Product" },
     {
       label: t`Documentation`,
-      href: "https://docs.kan.bn",
+      href: "https://docs.workos",
       openInNewTab: true,
       group: "Resources",
     },
     { label: t`FAQ`, href: "/#faq", group: "Resources" },
-    { label: t`Contact`, href: "mailto:support@kan.bn", group: "Resources" },
+    { label: t`Contact`, href: "mailto:support@workos", group: "Resources" },
   ];
 
   // Group mobile menu items by their group property
