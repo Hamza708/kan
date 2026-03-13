@@ -408,7 +408,10 @@ export default function BoardPage({ isTemplate }: { isTemplate?: boolean }) {
           <BoardMembersModal
             boardPublicId={((entityId as string) || boardId) ?? ""}
             workspaceMembers={boardData.workspace.members
-              .filter((m): m is typeof m & { user: NonNullable<typeof m.user> } => m.user !== null)
+              .filter(
+                (m): m is typeof m & { user: NonNullable<typeof m.user> } =>
+                  m.user !== null && "status" in m && m.status === "active",
+              )
               .map((m) => ({
                 publicId: m.publicId,
                 email: m.email,
