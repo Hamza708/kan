@@ -427,16 +427,25 @@ export function Auth({ setIsMagicLinkSent, isSignUp }: AuthProps) {
               <p className="mt-2 text-xs text-red-400">{loginError}</p>
             )}
           </div>
-          <div className="mt-[1.5rem] flex items-center gap-4">
-            <Button
-              isLoading={isLoginWithEmailPending}
-              fullWidth
-              size="lg"
-              variant="secondary"
-            >
-              {isSignUp ? t`Sign up with ` : t`Continue with `}
-              {isMagicLinkMode ? t`magic link` : t`email`}
-            </Button>
+          <div className="mt-[1.5rem] space-y-3">
+            <div className="flex items-center gap-4">
+              <Button
+                isLoading={isLoginWithEmailPending}
+                fullWidth
+                size="lg"
+                variant="secondary"
+              >
+                {isSignUp ? t`Sign up with ` : t`Continue with `}
+                {isMagicLinkMode ? t`magic link` : t`email`}
+              </Button>
+            </div>
+            {!isSignUp && isCredentialsEnabled && (
+              <p className="text-center text-xs text-light-900 underline dark:text-dark-900">
+                <Trans>
+                  <a href="/forgot-password">Forgot your password?</a>
+                </Trans>
+              </p>
+            )}
           </div>
         </form>
       )}
