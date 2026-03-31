@@ -229,6 +229,7 @@ export default function Avatar({
             alt="Avatar"
             width={64}
             height={64}
+            unoptimized
             className="rounded-full"
           />
         ) : (
