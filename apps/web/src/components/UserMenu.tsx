@@ -85,6 +85,7 @@ export default function UserMenu({
                 className="rounded-full bg-gray-50"
                 width={24}
                 height={24}
+                unoptimized
                 alt=""
               />
             ) : (
