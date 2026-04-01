@@ -37,6 +37,7 @@ const Avatar = ({
           className="rounded-full bg-gray-50"
           width={sizeMap[size]}
           height={sizeMap[size]}
+          unoptimized
           alt=""
         />
       ) : (
