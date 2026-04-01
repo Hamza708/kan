@@ -436,3 +436,93 @@ export const searchBoardsAndCards = async (
   // Ensure we don't exceed the total limit
   return allResults.slice(0, limit);
 };
+
+export const searchBoardsAndCardsGlobal = async (
+  db: dbClient,
+  userId: string,
+  query: string,
+  limit = 20,
+) => {
+  const searchQuery = `%${query}%`;
+
+  const boardResults = await db
+    .select({
+      publicId: boards.publicId,
+      title: boards.name,
+      description: boards.description,
+      slug: boards.slug,
+      workspacePublicId: workspaces.publicId,
+      workspaceName: workspaces.name,
+      updatedAt: boards.updatedAt,
+      createdAt: boards.createdAt,
+    })
+    .from(boards)
+    .innerJoin(workspaces, eq(boards.workspaceId, workspaces.id))
+    .innerJoin(workspaceMembers, eq(workspaceMembers.workspaceId, workspaces.id))
+    .where(
+      and(
+        eq(workspaceMembers.userId, userId),
+        eq(workspaceMembers.status, "active"),
+        isNull(workspaceMembers.deletedAt),
+        or(
+          ilike(boards.name, searchQuery),
+          sql`similarity(${boards.name}, ${query}) > 0.2`,
+        ),
+        isNull(boards.deletedAt),
+        isNull(workspaces.deletedAt),
+      ),
+    )
+    .orderBy(
+      sql`CASE WHEN ${boards.name} ILIKE ${searchQuery} THEN 1 ELSE 0 END DESC`,
+      sql`similarity(${boards.name}, ${query}) DESC`,
+      desc(boards.updatedAt),
+    )
+    .limit(Math.ceil(limit * 0.4));
+
+  const cardResults = await db
+    .select({
+      publicId: cards.publicId,
+      title: cards.title,
+      description: cards.description,
+      boardPublicId: boards.publicId,
+      boardName: boards.name,
+      listName: lists.name,
+      workspacePublicId: workspaces.publicId,
+      workspaceName: workspaces.name,
+      updatedAt: cards.updatedAt,
+      createdAt: cards.createdAt,
+    })
+    .from(cards)
+    .innerJoin(lists, eq(cards.listId, lists.id))
+    .innerJoin(boards, eq(lists.boardId, boards.id))
+    .innerJoin(workspaces, eq(boards.workspaceId, workspaces.id))
+    .innerJoin(workspaceMembers, eq(workspaceMembers.workspaceId, workspaces.id))
+    .where(
+      and(
+        eq(workspaceMembers.userId, userId),
+        eq(workspaceMembers.status, "active"),
+        isNull(workspaceMembers.deletedAt),
+        or(
+          ilike(cards.title, searchQuery),
+          sql`similarity(${cards.title}, ${query}) > 0.2`,
+        ),
+        isNull(cards.deletedAt),
+        isNull(lists.deletedAt),
+        isNull(boards.deletedAt),
+        isNull(workspaces.deletedAt),
+      ),
+    )
+    .orderBy(
+      sql`CASE WHEN ${cards.title} ILIKE ${searchQuery} THEN 1 ELSE 0 END DESC`,
+      sql`similarity(${cards.title}, ${query}) DESC`,
+      desc(cards.updatedAt),
+    )
+    .limit(Math.floor(limit * 0.6));
+
+  const allResults = [
+    ...boardResults.map((board) => ({ ...board, type: "board" as const })),
+    ...cardResults.map((card) => ({ ...card, type: "card" as const })),
+  ];
+
+  return allResults.slice(0, limit);
+};

@@ -13,7 +13,6 @@ import { useState } from "react";
 import { HiDocumentText, HiFolder, HiMagnifyingGlass } from "react-icons/hi2";
 
 import { useDebounce } from "~/hooks/useDebounce";
-import { useWorkspace } from "~/providers/workspace";
 import { api } from "~/utils/api";
 
 type SearchResult =
@@ -22,6 +21,8 @@ type SearchResult =
       title: string;
       description: string | null;
       slug: string;
+      workspacePublicId: string;
+      workspaceName: string;
       updatedAt: Date | null;
       createdAt: Date;
       type: "board";
@@ -33,6 +34,8 @@ type SearchResult =
       boardPublicId: string;
       boardName: string;
       listName: string;
+      workspacePublicId: string;
+      workspaceName: string;
       updatedAt: Date | null;
       createdAt: Date;
       type: "card";
@@ -46,7 +49,6 @@ export default function CommandPallette({
   onClose: () => void;
 }) {
   const [query, setQuery] = useState("");
-  const { workspace } = useWorkspace();
   const router = useRouter();
 
   // Debounce to avoid too many reqs
@@ -57,13 +59,12 @@ export default function CommandPallette({
     isLoading,
     isFetched,
     isPlaceholderData,
-  } = api.workspace.search.useQuery(
+  } = api.workspace.searchGlobal.useQuery(
     {
-      workspacePublicId: workspace.publicId,
       query: debouncedQuery,
     },
     {
-      enabled: Boolean(workspace.publicId && debouncedQuery.trim().length > 0),
+      enabled: Boolean(debouncedQuery.trim().length > 0),
       placeholderData: (previousData) => previousData,
     },
   );
@@ -165,7 +166,12 @@ export default function CommandPallette({
                             </div>
                             {result.type === "card" && (
                               <div className="truncate text-xs text-light-700 dark:text-dark-700">
-                                {`${t`in`} ${result.boardName} → ${result.listName}`}
+                                {`${result.workspaceName} → ${result.boardName} → ${result.listName}`}
+                              </div>
+                            )}
+                            {result.type === "board" && (
+                              <div className="truncate text-xs text-light-700 dark:text-dark-700">
+                                {result.workspaceName}
                               </div>
                             )}
                           </div>

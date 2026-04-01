@@ -548,4 +548,70 @@ export const workspaceRouter = createTRPCRouter({
 
       return result;
     }),
+  searchGlobal: protectedProcedure
+    .meta({
+      openapi: {
+        summary: "Search boards and cards in all user workspaces",
+        method: "GET",
+        path: "/workspaces/search/global",
+        description:
+          "Searches for boards and cards by title across workspaces the user can access",
+        tags: ["Workspaces"],
+        protect: true,
+      },
+    })
+    .input(
+      z.object({
+        query: z.string().min(1).max(100),
+        limit: z.number().min(1).max(50).optional().default(20),
+      }),
+    )
+    .output(
+      z.array(
+        z.discriminatedUnion("type", [
+          z.object({
+            publicId: z.string(),
+            title: z.string(),
+            description: z.string().nullable(),
+            slug: z.string(),
+            workspacePublicId: z.string(),
+            workspaceName: z.string(),
+            updatedAt: z.date().nullable(),
+            createdAt: z.date(),
+            type: z.literal("board"),
+          }),
+          z.object({
+            publicId: z.string(),
+            title: z.string(),
+            description: z.string().nullable(),
+            boardPublicId: z.string(),
+            boardName: z.string(),
+            listName: z.string(),
+            workspacePublicId: z.string(),
+            workspaceName: z.string(),
+            updatedAt: z.date().nullable(),
+            createdAt: z.date(),
+            type: z.literal("card"),
+          }),
+        ]),
+      ),
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.user?.id;
+
+      if (!userId)
+        throw new TRPCError({
+          message: `User not authenticated`,
+          code: "UNAUTHORIZED",
+        });
+
+      const result = await workspaceRepo.searchBoardsAndCardsGlobal(
+        ctx.db,
+        userId,
+        input.query,
+        input.limit,
+      );
+
+      return result;
+    }),
 });
