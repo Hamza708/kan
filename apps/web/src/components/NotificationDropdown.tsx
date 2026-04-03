@@ -18,6 +18,7 @@ type NotificationType =
   | "workspace.member.added"
   | "workspace.member.removed"
   | "workspace.role.changed"
+  | "workspace.member.invited"
   | "board.member.added";
 
 /**
@@ -30,7 +31,7 @@ function getNotificationMessage(
   cardTitle?: string | null,
   workspaceName?: string | null,
   actorName?: string | null,
-  metadata?: { boardName?: string } | null,
+  metadata?: { boardName?: string; memberPublicId?: string } | null,
 ): string {
   switch (type) {
     case "board.member.added":
@@ -55,6 +56,10 @@ function getNotificationMessage(
         : "You were removed from a workspace";
     case "workspace.role.changed":
       return "Your role was changed";
+    case "workspace.member.invited":
+      return workspaceName
+        ? `You were invited to workspace "${workspaceName}"`
+        : "You were invited to a workspace";
     default:
       return "Notification";
   }
@@ -64,7 +69,7 @@ function getNotificationLink(
   type: NotificationType,
   cardPublicId?: string | null,
   workspacePublicId?: string | null,
-  metadata?: { boardPublicId?: string } | null,
+  metadata?: { boardPublicId?: string; memberPublicId?: string } | null,
 ) {
   if (type === "mention" && cardPublicId) {
     return `/cards/${cardPublicId}`;
@@ -79,6 +84,9 @@ function getNotificationLink(
     workspacePublicId
   ) {
     return `/boards`;
+  }
+  if (type === "workspace.member.invited" && metadata?.memberPublicId) {
+    return `/boards?type=invite&memberPublicId=${metadata.memberPublicId}`;
   }
   return null;
 }
@@ -184,12 +192,16 @@ export default function NotificationDropdown({
                   <ul className="py-1">
                     {items.map((item) => {
                       const metadata =
-                        item.metadata && item.type === "board.member.added"
+                        item.metadata &&
+                        (item.type === "board.member.added" ||
+                          item.type === "workspace.member.invited")
                           ? (() => {
                               try {
-                                return JSON.parse(
-                                  item.metadata!,
-                                ) as { boardPublicId?: string; boardName?: string };
+                                return JSON.parse(item.metadata!) as {
+                                  boardPublicId?: string;
+                                  boardName?: string;
+                                  memberPublicId?: string;
+                                };
                               } catch {
                                 return null;
                               }
@@ -210,6 +222,8 @@ export default function NotificationDropdown({
                       );
                       const isUnread = !item.readAt;
 
+                      const isInvite = item.type === "workspace.member.invited";
+
                       const content = (
                         <div className="flex flex-col gap-0.5">
                           <span
@@ -220,11 +234,28 @@ export default function NotificationDropdown({
                           >
                             {message}
                           </span>
-                          <span className="text-xs text-light-600 dark:text-dark-500">
+                          <span className="text-xs text-light-600 dark:text-white">
                             {formatDistanceToNow(new Date(item.createdAt), {
                               addSuffix: true,
                             })}
                           </span>
+                          {isInvite && link && (
+                            <Link
+                              href={link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => {
+                                if (isUnread) {
+                                  markAsReadMutation.mutate({
+                                    notificationId: item.id,
+                                  });
+                                }
+                              }}
+                              className="text-primary-600 dark:text-primary-400 mt-1 w-fit rounded border border-current px-2 py-0.5 text-xs font-medium hover:opacity-80"
+                            >
+                              {t`Join workspace`}
+                            </Link>
+                          )}
                         </div>
                       );
 
@@ -236,7 +267,7 @@ export default function NotificationDropdown({
                               isUnread && "bg-light-100 dark:bg-dark-200/50",
                             )}
                           >
-                            {link ? (
+                            {link && !isInvite ? (
                               <Link
                                 href={link}
                                 onClick={() => {
@@ -254,7 +285,7 @@ export default function NotificationDropdown({
                             ) : (
                               <div className="flex-1">{content}</div>
                             )}
-                            {isUnread && link && (
+                            {isUnread && link && !isInvite && (
                               <button
                                 type="button"
                                 onClick={(e) => {
