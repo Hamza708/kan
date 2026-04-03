@@ -164,7 +164,66 @@ export const memberRouter = createTRPCRouter({
         });
       }
 
+      // If the invitee already has an account, send an in-app notification
+      if (existingUser?.id) {
+        await notificationRepo.deleteByUserAndType(ctx.db, {
+          userId: existingUser.id,
+          type: "workspace.member.invited",
+          workspaceId: workspace.id,
+        });
+
+        await notificationRepo.create(ctx.db, {
+          type: "workspace.member.invited",
+          userId: existingUser.id,
+          workspaceId: workspace.id,
+          metadata: JSON.stringify({
+            memberPublicId: invite.publicId,
+          }),
+        });
+      }
+
       return invite;
+    }),
+  acceptEmailInvite: protectedProcedure
+    .input(z.object({ memberPublicId: z.string().min(12) }))
+    .output(z.object({ workspacePublicId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user?.id;
+
+      if (!userId)
+        throw new TRPCError({
+          message: `User not authenticated`,
+          code: "UNAUTHORIZED",
+        });
+
+      const member = await memberRepo.getByPublicId(ctx.db, input.memberPublicId);
+
+      if (!member || member.status !== "invited")
+        throw new TRPCError({
+          message: `Invite not found or already accepted`,
+          code: "NOT_FOUND",
+        });
+
+      const workspace = await workspaceRepo.getById(ctx.db, member.workspaceId);
+
+      if (!workspace)
+        throw new TRPCError({ message: `Workspace not found`, code: "NOT_FOUND" });
+
+      await memberRepo.acceptInvite(ctx.db, { memberId: member.id, userId });
+
+      await notificationRepo.deleteByUserAndType(ctx.db, {
+        userId,
+        type: "workspace.member.invited",
+        workspaceId: member.workspaceId,
+      });
+
+      await notificationRepo.create(ctx.db, {
+        type: "workspace.member.added",
+        userId,
+        workspaceId: member.workspaceId,
+      });
+
+      return { workspacePublicId: workspace.publicId };
     }),
   delete: protectedProcedure
     .meta({

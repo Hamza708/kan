@@ -211,6 +211,20 @@
       "when": 1730203300000,
       "tag": "20260228150000_DisableRLSOnBoardMembers",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1743638400000,
+      "tag": "20260304120000_AddBoardKind",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1743724800000,
+      "tag": "20260403000000_AddWorkspaceMemberInvitedNotificationType",
+      "breakpoints": true
     }
   ]
 }

@@ -163,6 +163,24 @@ export const listByUserId = async (
   return { items, nextCursor };
 };
 
+export const deleteByUserAndType = async (
+  db: dbClient,
+  args: { userId: string; type: NotificationType; workspaceId?: number },
+) => {
+  const conditions = [
+    eq(notifications.userId, args.userId),
+    eq(notifications.type, args.type),
+    isNull(notifications.deletedAt),
+  ];
+  if (args.workspaceId) {
+    conditions.push(eq(notifications.workspaceId, args.workspaceId));
+  }
+  await db
+    .update(notifications)
+    .set({ deletedAt: new Date() })
+    .where(and(...conditions));
+};
+
 export const markAllAsRead = async (db: dbClient, userId: string) => {
   await db
     .update(notifications)
