@@ -19,7 +19,8 @@ type NotificationType =
   | "workspace.member.removed"
   | "workspace.role.changed"
   | "workspace.member.invited"
-  | "board.member.added";
+  | "board.member.added"
+  | "card.member.added";
 
 /**
  * Uses plain template literals so messages render correctly in production (Vercel).
@@ -31,9 +32,13 @@ function getNotificationMessage(
   cardTitle?: string | null,
   workspaceName?: string | null,
   actorName?: string | null,
-  metadata?: { boardName?: string; memberPublicId?: string } | null,
+  metadata?: { boardName?: string; memberPublicId?: string; cardPublicId?: string } | null,
 ): string {
   switch (type) {
+    case "card.member.added":
+      return cardTitle
+        ? `You were added to card "${cardTitle}"`
+        : "You were added to a card";
     case "board.member.added":
       return metadata?.boardName
         ? `You were added to board "${metadata.boardName}"`
@@ -69,10 +74,13 @@ function getNotificationLink(
   type: NotificationType,
   cardPublicId?: string | null,
   workspacePublicId?: string | null,
-  metadata?: { boardPublicId?: string; memberPublicId?: string } | null,
+  metadata?: { boardPublicId?: string; memberPublicId?: string; cardPublicId?: string } | null,
 ) {
   if (type === "mention" && cardPublicId) {
     return `/cards/${cardPublicId}`;
+  }
+  if (type === "card.member.added" && (cardPublicId ?? metadata?.cardPublicId)) {
+    return `/cards/${cardPublicId ?? metadata?.cardPublicId}`;
   }
   if (type === "board.member.added" && metadata?.boardPublicId) {
     return `/boards/${metadata.boardPublicId}`;
@@ -194,6 +202,7 @@ export default function NotificationDropdown({
                       const metadata =
                         item.metadata &&
                         (item.type === "board.member.added" ||
+                          item.type === "card.member.added" ||
                           item.type === "workspace.member.invited")
                           ? (() => {
                               try {
@@ -201,6 +210,7 @@ export default function NotificationDropdown({
                                   boardPublicId?: string;
                                   boardName?: string;
                                   memberPublicId?: string;
+                                  cardPublicId?: string;
                                 };
                               } catch {
                                 return null;

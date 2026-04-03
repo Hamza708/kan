@@ -7,6 +7,7 @@ import * as cardActivityRepo from "@kan/db/repository/cardActivity.repo";
 import * as cardCommentRepo from "@kan/db/repository/cardComment.repo";
 import * as labelRepo from "@kan/db/repository/label.repo";
 import * as listRepo from "@kan/db/repository/list.repo";
+import * as notificationRepo from "@kan/db/repository/notification.repo";
 import * as workspaceRepo from "@kan/db/repository/workspace.repo";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -595,6 +596,20 @@ export const cardRouter = createTRPCRouter({
         workspaceMemberId: member.id,
         createdBy: userId,
       });
+
+      if (member.userId && member.userId !== userId) {
+        await notificationRepo.create(ctx.db, {
+          type: "card.member.added",
+          userId: member.userId,
+          cardId: card.id,
+          workspaceId: card.workspaceId,
+          metadata: JSON.stringify({
+            cardPublicId: input.cardPublicId,
+            boardPublicId: card.boardPublicId,
+            boardName: card.boardName,
+          }),
+        });
+      }
 
       return { newMember: true };
     }),

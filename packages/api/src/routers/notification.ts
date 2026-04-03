@@ -15,6 +15,7 @@ const notificationItemSchema = z.object({
     "workspace.role.changed",
     "workspace.member.invited",
     "board.member.added",
+    "card.member.added",
   ]),
   cardId: z.number().nullable(),
   commentId: z.number().nullable(),
