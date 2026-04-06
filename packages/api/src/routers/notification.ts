@@ -200,4 +200,29 @@ export const notificationRouter = createTRPCRouter({
 
       return notificationRepo.getCardPublicIdsWithUnreadMention(ctx.db, userId);
     }),
+
+  getMentionedBoardIds: protectedProcedure
+    .meta({
+      openapi: {
+        summary: "Get board IDs where the current user has an unread mention",
+        method: "GET",
+        path: "/notifications/mentioned-boards",
+        description:
+          "Returns board publicIds for boards where the user was mentioned in a card (unread)",
+        tags: ["Notifications"],
+        protect: true,
+      },
+    })
+    .input(z.void())
+    .output(z.array(z.string()))
+    .query(async ({ ctx }) => {
+      const userId = ctx.user?.id;
+      if (!userId)
+        throw new TRPCError({
+          message: "User not authenticated",
+          code: "UNAUTHORIZED",
+        });
+
+      return notificationRepo.getBoardPublicIdsWithUnreadMention(ctx.db, userId);
+    }),
 });

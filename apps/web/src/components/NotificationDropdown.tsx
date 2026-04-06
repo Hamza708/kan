@@ -274,7 +274,9 @@ export default function NotificationDropdown({
                           <li
                             className={twMerge(
                               "flex items-start gap-2 border-b border-light-200 px-3 py-2 last:border-b-0 dark:border-dark-400",
-                              isUnread && "bg-light-100 dark:bg-dark-200/50",
+                              isUnread
+                                ? "bg-light-200 dark:bg-dark-100/80"
+                                : "bg-transparent dark:bg-dark-400/20",
                             )}
                           >
                             {link && !isInvite ? (

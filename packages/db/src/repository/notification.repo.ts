@@ -2,7 +2,7 @@ import { and, count, desc, eq, isNull, lt } from "drizzle-orm";
 
 import type { dbClient } from "@kan/db/client";
 import type { NotificationType } from "@kan/db/schema";
-import { cards, notifications, workspaces } from "@kan/db/schema";
+import { boards, cards, lists, notifications, workspaces } from "@kan/db/schema";
 import { generateUID } from "@kan/shared/utils";
 
 export const create = async (
@@ -202,6 +202,27 @@ export const getCardPublicIdsWithUnreadMention = async (
     .selectDistinct({ publicId: cards.publicId })
     .from(notifications)
     .innerJoin(cards, eq(notifications.cardId, cards.id))
+    .where(
+      and(
+        eq(notifications.userId, userId),
+        eq(notifications.type, "mention"),
+        isNull(notifications.readAt),
+        isNull(notifications.deletedAt),
+      ),
+    );
+  return rows.map((r) => r.publicId);
+};
+
+export const getBoardPublicIdsWithUnreadMention = async (
+  db: dbClient,
+  userId: string,
+): Promise<string[]> => {
+  const rows = await db
+    .selectDistinct({ publicId: boards.publicId })
+    .from(notifications)
+    .innerJoin(cards, eq(notifications.cardId, cards.id))
+    .innerJoin(lists, eq(cards.listId, lists.id))
+    .innerJoin(boards, eq(lists.boardId, boards.id))
     .where(
       and(
         eq(notifications.userId, userId),
