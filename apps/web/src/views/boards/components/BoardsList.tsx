@@ -22,6 +22,11 @@ export function BoardsList({ isTemplate }: { isTemplate?: boolean }) {
     },
   });
 
+  const { data: mentionedBoardIds = [] } =
+    api.notification.getMentionedBoardIds.useQuery(undefined, {
+      enabled: !!workspace.publicId,
+    });
+
   const { data, isLoading } = api.board.all.useQuery(
     {
       workspacePublicId: workspace.publicId,
@@ -132,9 +137,18 @@ export function BoardsList({ isTemplate }: { isTemplate?: boolean }) {
                     <HiOutlineStar className="h-5 w-5 text-neutral-700 dark:text-dark-800" />
                   )}
                 </button>
-              <p className="px-4 text-[14px] font-bold text-neutral-700 dark:text-dark-1000">
-                {board.name}
-              </p>
+              <div className="flex items-center gap-2 px-4">
+                <p className="text-[14px] font-bold text-neutral-700 dark:text-dark-1000">
+                  {board.name}
+                </p>
+                {mentionedBoardIds.includes(board.publicId) && (
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full bg-red-500"
+                    title={t`You're mentioned in a card on this board`}
+                    aria-label={t`You're mentioned in a card on this board`}
+                  />
+                )}
+              </div>
             </div>
           </Link>
         </motion.div>
