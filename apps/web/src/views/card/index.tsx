@@ -64,7 +64,7 @@ export function CardRightPanel({ isTemplate }: { isTemplate?: boolean }) {
 
   const board = card?.list.board;
   const labels = board?.labels;
-  const workspaceMembers = board?.workspace.members;
+  const workspaceMembers = board?.boardMembersForMentions;
   const selectedLabels = card?.labels;
   const selectedMembers = card?.members;
 
