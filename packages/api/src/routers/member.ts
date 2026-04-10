@@ -2,6 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { env } from "next-runtime-env";
 import { z } from "zod";
 
+import * as boardMemberRepo from "@kan/db/repository/boardMember.repo";
+import * as boardRepo from "@kan/db/repository/board.repo";
 import * as inviteLinkRepo from "@kan/db/repository/inviteLink.repo";
 import * as memberRepo from "@kan/db/repository/member.repo";
 import * as notificationRepo from "@kan/db/repository/notification.repo";
@@ -825,6 +827,30 @@ export const memberRouter = createTRPCRouter({
         role: input.role,
         roleId: workspaceRole?.id ?? null,
       });
+
+      // When promoting to admin, grant access to all boards in the workspace
+      if (input.role === "admin" && member.userId) {
+        const boardIds = await boardRepo.getIdsByWorkspaceId(
+          ctx.db,
+          workspace.id,
+        );
+        await Promise.all(
+          boardIds.map(async (boardId) => {
+            const alreadyMember = await boardMemberRepo.isMember(
+              ctx.db,
+              boardId,
+              member.userId!,
+            );
+            if (!alreadyMember) {
+              await boardMemberRepo.add(ctx.db, {
+                boardId,
+                userId: member.userId!,
+                createdBy: userId,
+              });
+            }
+          }),
+        );
+      }
 
       return {
         success: true,

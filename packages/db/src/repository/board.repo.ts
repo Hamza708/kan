@@ -690,6 +690,17 @@ export const softDelete = async (
   return result;
 };
 
+export const getIdsByWorkspaceId = async (
+  db: dbClient,
+  workspaceId: number,
+) => {
+  const rows = await db
+    .select({ id: boards.id })
+    .from(boards)
+    .where(and(eq(boards.workspaceId, workspaceId), isNull(boards.deletedAt)));
+  return rows.map((r) => r.id);
+};
+
 export const hardDelete = async (db: dbClient, workspaceId: number) => {
   const [result] = await db
     .delete(boards)
