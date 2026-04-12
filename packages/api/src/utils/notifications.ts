@@ -2,6 +2,7 @@ import { env } from "next-runtime-env";
 
 import type { dbClient } from "@kan/db/client";
 import * as cardRepo from "@kan/db/repository/card.repo";
+import * as cardWatcherRepo from "@kan/db/repository/cardWatcher.repo";
 import * as memberRepo from "@kan/db/repository/member.repo";
 import * as notificationRepo from "@kan/db/repository/notification.repo";
 import * as userRepo from "@kan/db/repository/user.repo";
@@ -131,6 +132,41 @@ export async function sendMentionEmails({
   } catch (error) {
     console.error("Error sending mention emails:", {
       cardPublicId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+/**
+ * Sends in-app notifications to all watchers of a card when an activity occurs.
+ * The actor (user who caused the activity) is excluded from notifications.
+ */
+export async function sendWatchNotifications({
+  db,
+  cardId,
+  actorUserId,
+}: {
+  db: dbClient;
+  cardId: number;
+  actorUserId: string;
+}) {
+  try {
+    const watcherUserIds = await cardWatcherRepo.getWatcherUserIds(db, cardId);
+    const usersToNotify = watcherUserIds.filter((uid) => uid !== actorUserId);
+    if (usersToNotify.length === 0) return;
+
+    await Promise.all(
+      usersToNotify.map((userId) =>
+        notificationRepo.create(db, {
+          type: "card.activity",
+          userId,
+          cardId,
+        }),
+      ),
+    );
+  } catch (error) {
+    console.error("Error sending watch notifications:", {
+      cardId,
       error: error instanceof Error ? error.message : String(error),
     });
   }

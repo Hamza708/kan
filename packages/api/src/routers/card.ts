@@ -5,6 +5,7 @@ import * as boardMemberRepo from "@kan/db/repository/boardMember.repo";
 import * as cardRepo from "@kan/db/repository/card.repo";
 import * as cardActivityRepo from "@kan/db/repository/cardActivity.repo";
 import * as cardCommentRepo from "@kan/db/repository/cardComment.repo";
+import * as cardWatcherRepo from "@kan/db/repository/cardWatcher.repo";
 import * as labelRepo from "@kan/db/repository/label.repo";
 import * as listRepo from "@kan/db/repository/list.repo";
 import * as notificationRepo from "@kan/db/repository/notification.repo";
@@ -12,7 +13,7 @@ import * as workspaceRepo from "@kan/db/repository/workspace.repo";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { mergeActivities } from "../utils/activities";
-import { sendMentionEmails } from "../utils/notifications";
+import { sendMentionEmails, sendWatchNotifications } from "../utils/notifications";
 import { assertCanDelete, assertCanEdit, assertPermission } from "../utils/permissions";
 import { generateAttachmentUrl, generateAvatarUrl } from "@kan/shared/utils";
 
@@ -167,6 +168,13 @@ export const cardRouter = createTRPCRouter({
         });
       }
 
+      // Auto-watch the card creator
+      cardWatcherRepo
+        .addWatcher(ctx.db, { cardId: newCardId, userId })
+        .catch((error) => {
+          console.error("Failed to auto-watch card creator:", error);
+        });
+
       return newCard;
     }),
   addComment: protectedProcedure
@@ -238,6 +246,10 @@ export const cardRouter = createTRPCRouter({
       }).catch((error) => {
         console.error("Failed to send mention emails:", error);
       });
+
+      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+        (error) => console.error("Failed to send watch notifications:", error),
+      );
 
       return newComment;
     }),
@@ -329,6 +341,10 @@ export const cardRouter = createTRPCRouter({
         console.error("Failed to send mention emails:", error);
       });
 
+      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+        (error) => console.error("Failed to send watch notifications:", error),
+      );
+
       return updatedComment;
     }),
   deleteComment: protectedProcedure
@@ -406,6 +422,10 @@ export const cardRouter = createTRPCRouter({
         createdBy: userId,
       });
 
+      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+        (error) => console.error("Failed to send watch notifications:", error),
+      );
+
       return deletedComment;
     }),
   addOrRemoveLabel: protectedProcedure
@@ -480,6 +500,10 @@ export const cardRouter = createTRPCRouter({
           createdBy: userId,
         });
 
+        sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+          (error) => console.error("Failed to send watch notifications:", error),
+        );
+
         return { newLabel: false };
       }
 
@@ -498,6 +522,10 @@ export const cardRouter = createTRPCRouter({
         labelId: label.id,
         createdBy: userId,
       });
+
+      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+        (error) => console.error("Failed to send watch notifications:", error),
+      );
 
       return { newLabel: true };
     }),
@@ -578,6 +606,10 @@ export const cardRouter = createTRPCRouter({
           createdBy: userId,
         });
 
+        sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+          (error) => console.error("Failed to send watch notifications:", error),
+        );
+
         return { newMember: false };
       }
 
@@ -596,6 +628,10 @@ export const cardRouter = createTRPCRouter({
         workspaceMemberId: member.id,
         createdBy: userId,
       });
+
+      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+        (error) => console.error("Failed to send watch notifications:", error),
+      );
 
       if (member.userId && member.userId !== userId) {
         await notificationRepo.create(ctx.db, {
@@ -750,8 +786,16 @@ export const cardRouter = createTRPCRouter({
         }),
       );
 
+      const isWatching = ctx.user?.id
+        ? await cardWatcherRepo.isWatching(ctx.db, {
+            cardId: result.id,
+            userId: ctx.user.id,
+          })
+        : false;
+
       return {
         ...result,
+        isWatching,
         attachments: attachmentsWithUrls,
         list: {
           ...result.list,
@@ -1056,6 +1100,10 @@ export const cardRouter = createTRPCRouter({
 
       if (activities.length > 0) {
         await cardActivityRepo.bulkCreate(ctx.db, activities);
+
+        sendWatchNotifications({ db: ctx.db, cardId: result.id, actorUserId: userId }).catch(
+          (error) => console.error("Failed to send watch notifications:", error),
+        );
       }
 
       return result;
@@ -1119,6 +1167,48 @@ export const cardRouter = createTRPCRouter({
         createdBy: userId,
       });
 
+      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+        (error) => console.error("Failed to send watch notifications:", error),
+      );
+
       return { success: true };
+    }),
+  toggleWatch: protectedProcedure
+    .meta({
+      openapi: {
+        summary: "Toggle watch on a card",
+        method: "POST",
+        path: "/cards/{cardPublicId}/watch",
+        description:
+          "Subscribes or unsubscribes the current user to card activity notifications",
+        tags: ["Cards"],
+        protect: true,
+      },
+    })
+    .input(z.object({ cardPublicId: z.string().min(12) }))
+    .output(z.object({ watching: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user?.id;
+
+      if (!userId)
+        throw new TRPCError({
+          message: `User not authenticated`,
+          code: "UNAUTHORIZED",
+        });
+
+      const card = await cardRepo.getWorkspaceAndCardIdByCardPublicId(
+        ctx.db,
+        input.cardPublicId,
+      );
+
+      if (!card)
+        throw new TRPCError({
+          message: `Card with public ID ${input.cardPublicId} not found`,
+          code: "NOT_FOUND",
+        });
+
+      await assertPermission(ctx.db, userId, card.workspaceId, "card:view");
+
+      return cardWatcherRepo.toggle(ctx.db, { cardId: card.id, userId });
     }),
 });

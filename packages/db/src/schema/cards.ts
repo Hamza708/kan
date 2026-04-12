@@ -103,6 +103,7 @@ export const cardsRelations = relations(cards, ({ one, many }) => ({
   activities: many(cardActivities),
   checklists: many(checklists),
   attachments: many(cardAttachments),
+  watchers: many(cardWatchers),
 }));
 
 export const cardActivities = pgTable("card_activity", {
@@ -325,3 +326,30 @@ export const cardAttachmentsRelations = relations(
     }),
   }),
 );
+
+export const cardWatchers = pgTable(
+  "_card_watchers",
+  {
+    cardId: bigint("cardId", { mode: "number" })
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.cardId, t.userId] })],
+).enableRLS();
+
+export const cardWatchersRelations = relations(cardWatchers, ({ one }) => ({
+  card: one(cards, {
+    fields: [cardWatchers.cardId],
+    references: [cards.id],
+    relationName: "cardWatchersCard",
+  }),
+  user: one(users, {
+    fields: [cardWatchers.userId],
+    references: [users.id],
+    relationName: "cardWatchersUser",
+  }),
+}));

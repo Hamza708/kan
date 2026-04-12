@@ -20,7 +20,8 @@ type NotificationType =
   | "workspace.role.changed"
   | "workspace.member.invited"
   | "board.member.added"
-  | "card.member.added";
+  | "card.member.added"
+  | "card.activity";
 
 /**
  * Uses plain template literals so messages render correctly in production (Vercel).
@@ -65,6 +66,10 @@ function getNotificationMessage(
       return workspaceName
         ? `You were invited to workspace "${workspaceName}"`
         : "You were invited to a workspace";
+    case "card.activity":
+      return cardTitle
+        ? `Activity on card "${cardTitle}"`
+        : "Activity on a watched card";
     default:
       return "Notification";
   }
@@ -81,6 +86,9 @@ function getNotificationLink(
   }
   if (type === "card.member.added" && (cardPublicId ?? metadata?.cardPublicId)) {
     return `/cards/${cardPublicId ?? metadata?.cardPublicId}`;
+  }
+  if (type === "card.activity" && cardPublicId) {
+    return `/cards/${cardPublicId}`;
   }
   if (type === "board.member.added" && metadata?.boardPublicId) {
     return `/boards/${metadata.boardPublicId}`;
