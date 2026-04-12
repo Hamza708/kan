@@ -28,12 +28,44 @@ type NotificationType =
  * Lingui t`...` with variables can show raw placeholders like {who} when catalogs
  * aren't loaded or compiled for the build.
  */
+function activityTypeToAction(activityType: string | undefined): string {
+  switch (activityType) {
+    case "card.updated.comment.added": return "added a comment";
+    case "card.updated.comment.updated": return "updated a comment";
+    case "card.updated.comment.deleted": return "deleted a comment";
+    case "card.updated.label.added": return "added a label";
+    case "card.updated.label.removed": return "removed a label";
+    case "card.updated.member.added": return "added a member";
+    case "card.updated.member.removed": return "removed a member";
+    case "card.updated.title": return "updated the title";
+    case "card.updated.description": return "updated the description";
+    case "card.updated.dueDate.added": return "set the due date";
+    case "card.updated.dueDate.updated": return "changed the due date";
+    case "card.updated.dueDate.removed": return "removed the due date";
+    case "card.updated.list": return "moved the card";
+    case "card.updated.checklist.added": return "added a checklist";
+    case "card.updated.checklist.renamed": return "renamed a checklist";
+    case "card.updated.checklist.deleted": return "deleted a checklist";
+    case "card.updated.checklist.item.added": return "added a checklist item";
+    case "card.updated.checklist.item.updated": return "updated a checklist item";
+    case "card.updated.checklist.item.completed": return "completed a checklist item";
+    case "card.updated.checklist.item.uncompleted": return "uncompleted a checklist item";
+    case "card.updated.checklist.item.deleted": return "deleted a checklist item";
+    case "card.updated.attachment.added": return "added an attachment";
+    case "card.updated.attachment.removed": return "removed an attachment";
+    case "card.archived": return "archived the card";
+    default: return "made a change";
+  }
+}
+
 function getNotificationMessage(
   type: NotificationType,
   cardTitle?: string | null,
   workspaceName?: string | null,
   actorName?: string | null,
-  metadata?: { boardName?: string; memberPublicId?: string; cardPublicId?: string } | null,
+  metadata?: { boardName?: string; memberPublicId?: string; cardPublicId?: string; activityType?: string; actorName?: string; boardPublicId?: string } | null,
+  activityType?: string | null,
+  board?: { publicId: string; name: string } | null,
 ): string {
   switch (type) {
     case "card.member.added":
@@ -66,10 +98,15 @@ function getNotificationMessage(
       return workspaceName
         ? `You were invited to workspace "${workspaceName}"`
         : "You were invited to a workspace";
-    case "card.activity":
+    case "card.activity": {
+      const who = actorName?.trim() || metadata?.actorName?.trim() || "Someone";
+      const action = activityTypeToAction(activityType ?? metadata?.activityType);
+      const boardName = board?.name ?? metadata?.boardName;
+      const inBoard = boardName ? ` in "${boardName}"` : "";
       return cardTitle
-        ? `Activity on card "${cardTitle}"`
-        : "Activity on a watched card";
+        ? `${who} ${action} on "${cardTitle}"${inBoard}`
+        : `${who} ${action} on a watched card${inBoard}`;
+    }
     default:
       return "Notification";
   }
@@ -207,24 +244,22 @@ export default function NotificationDropdown({
                 ) : (
                   <ul className="py-1">
                     {items.map((item) => {
-                      const metadata =
-                        item.metadata &&
-                        (item.type === "board.member.added" ||
-                          item.type === "card.member.added" ||
-                          item.type === "workspace.member.invited")
-                          ? (() => {
-                              try {
-                                return JSON.parse(item.metadata!) as {
-                                  boardPublicId?: string;
-                                  boardName?: string;
-                                  memberPublicId?: string;
-                                  cardPublicId?: string;
-                                };
-                              } catch {
-                                return null;
-                              }
-                            })()
-                          : null;
+                      const metadata = item.metadata
+                        ? (() => {
+                            try {
+                              return JSON.parse(item.metadata) as {
+                                boardPublicId?: string;
+                                boardName?: string;
+                                memberPublicId?: string;
+                                cardPublicId?: string;
+                                activityType?: string;
+                                actorName?: string;
+                              };
+                            } catch {
+                              return null;
+                            }
+                          })()
+                        : null;
                       const link = getNotificationLink(
                         item.type,
                         item.card?.publicId,
@@ -237,6 +272,8 @@ export default function NotificationDropdown({
                         item.workspace?.name,
                         item.actorName,
                         metadata,
+                        item.activityType,
+                        item.board,
                       );
                       const isUnread = !item.readAt;
 

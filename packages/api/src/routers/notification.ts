@@ -22,8 +22,10 @@ const notificationItemSchema = z.object({
   commentId: z.number().nullable(),
   workspaceId: z.number().nullable(),
   metadata: z.string().nullable(),
-  /** Set for mention type: name of the user who mentioned you */
+  /** Set for mention and card.activity types: name of the user who performed the action */
   actorName: z.string().optional(),
+  /** Set for card.activity type: human-readable activity description */
+  activityType: z.string().optional(),
   readAt: z.date().nullable(),
   createdAt: z.date(),
   card: z
@@ -38,6 +40,13 @@ const notificationItemSchema = z.object({
       name: z.string(),
     })
     .nullable(),
+  board: z
+    .object({
+      publicId: z.string(),
+      name: z.string(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export const notificationRouter = createTRPCRouter({
@@ -79,15 +88,26 @@ export const notificationRouter = createTRPCRouter({
 
       const items = result.items.map((item) => {
         let actorName: string | undefined;
-        if (item.type === "mention" && item.metadata) {
+        let activityType: string | undefined;
+
+        if (item.metadata) {
           try {
-            const parsed = JSON.parse(item.metadata) as { actorName?: string };
-            actorName = parsed.actorName;
+            const parsed = JSON.parse(item.metadata) as {
+              actorName?: string;
+              activityType?: string;
+            };
+            if (item.type === "mention" || item.type === "card.activity") {
+              actorName = parsed.actorName;
+            }
+            if (item.type === "card.activity") {
+              activityType = parsed.activityType;
+            }
           } catch {
             // ignore invalid metadata
           }
         }
-        return { ...item, actorName };
+
+        return { ...item, actorName, activityType };
       });
 
       return { items, nextCursor: result.nextCursor };

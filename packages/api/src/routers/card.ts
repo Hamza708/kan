@@ -247,7 +247,7 @@ export const cardRouter = createTRPCRouter({
         console.error("Failed to send mention emails:", error);
       });
 
-      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId, activityType: "card.updated.comment.added" }).catch(
         (error) => console.error("Failed to send watch notifications:", error),
       );
 
@@ -341,7 +341,7 @@ export const cardRouter = createTRPCRouter({
         console.error("Failed to send mention emails:", error);
       });
 
-      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId, activityType: "card.updated.comment.updated" }).catch(
         (error) => console.error("Failed to send watch notifications:", error),
       );
 
@@ -422,7 +422,7 @@ export const cardRouter = createTRPCRouter({
         createdBy: userId,
       });
 
-      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId, activityType: "card.updated.comment.deleted" }).catch(
         (error) => console.error("Failed to send watch notifications:", error),
       );
 
@@ -500,7 +500,7 @@ export const cardRouter = createTRPCRouter({
           createdBy: userId,
         });
 
-        sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+        sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId, activityType: "card.updated.label.removed" }).catch(
           (error) => console.error("Failed to send watch notifications:", error),
         );
 
@@ -523,7 +523,7 @@ export const cardRouter = createTRPCRouter({
         createdBy: userId,
       });
 
-      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId, activityType: "card.updated.label.added" }).catch(
         (error) => console.error("Failed to send watch notifications:", error),
       );
 
@@ -606,7 +606,7 @@ export const cardRouter = createTRPCRouter({
           createdBy: userId,
         });
 
-        sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+        sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId, activityType: "card.updated.member.removed" }).catch(
           (error) => console.error("Failed to send watch notifications:", error),
         );
 
@@ -629,7 +629,7 @@ export const cardRouter = createTRPCRouter({
         createdBy: userId,
       });
 
-      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId, activityType: "card.updated.member.added" }).catch(
         (error) => console.error("Failed to send watch notifications:", error),
       );
 
@@ -1101,7 +1101,7 @@ export const cardRouter = createTRPCRouter({
       if (activities.length > 0) {
         await cardActivityRepo.bulkCreate(ctx.db, activities);
 
-        sendWatchNotifications({ db: ctx.db, cardId: result.id, actorUserId: userId }).catch(
+        sendWatchNotifications({ db: ctx.db, cardId: result.id, actorUserId: userId, activityType: activities[0]?.type }).catch(
           (error) => console.error("Failed to send watch notifications:", error),
         );
       }
@@ -1167,7 +1167,7 @@ export const cardRouter = createTRPCRouter({
         createdBy: userId,
       });
 
-      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId }).catch(
+      sendWatchNotifications({ db: ctx.db, cardId: card.id, actorUserId: userId, activityType: "card.archived" }).catch(
         (error) => console.error("Failed to send watch notifications:", error),
       );
 

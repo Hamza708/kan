@@ -7,6 +7,8 @@ import * as memberRepo from "@kan/db/repository/member.repo";
 import * as notificationRepo from "@kan/db/repository/notification.repo";
 import * as userRepo from "@kan/db/repository/user.repo";
 import * as workspaceRepo from "@kan/db/repository/workspace.repo";
+import { eq } from "drizzle-orm";
+import { boards, cards, lists } from "@kan/db/schema";
 import { sendEmail } from "@kan/email";
 import { parseMentionsFromHTML } from "@kan/shared/utils";
 
@@ -145,15 +147,41 @@ export async function sendWatchNotifications({
   db,
   cardId,
   actorUserId,
+  activityType,
 }: {
   db: dbClient;
   cardId: number;
   actorUserId: string;
+  activityType?: string;
 }) {
   try {
     const watcherUserIds = await cardWatcherRepo.getWatcherUserIds(db, cardId);
     const usersToNotify = watcherUserIds.filter((uid) => uid !== actorUserId);
     if (usersToNotify.length === 0) return;
+
+    // Fetch actor name and board name for rich notification display
+    const [actor, cardRow] = await Promise.all([
+      userRepo.getById(db, actorUserId),
+      db
+        .select({ boardName: boards.name, boardPublicId: boards.publicId })
+        .from(cards)
+        .innerJoin(lists, eq(cards.listId, lists.id))
+        .innerJoin(boards, eq(lists.boardId, boards.id))
+        .where(eq(cards.id, cardId))
+        .limit(1)
+        .then((rows) => rows[0] ?? null),
+    ]);
+
+    const actorName = actor?.name?.trim() || actor?.email || undefined;
+    const boardName = cardRow?.boardName ?? undefined;
+    const boardPublicId = cardRow?.boardPublicId ?? undefined;
+
+    const metadata = JSON.stringify({
+      activityType,
+      actorName,
+      boardName,
+      boardPublicId,
+    });
 
     await Promise.all(
       usersToNotify.map((userId) =>
@@ -161,6 +189,7 @@ export async function sendWatchNotifications({
           type: "card.activity",
           userId,
           cardId,
+          metadata,
         }),
       ),
     );

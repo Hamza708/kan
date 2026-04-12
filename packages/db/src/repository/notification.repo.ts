@@ -132,9 +132,13 @@ export const listByUserId = async (
       cardTitle: cards.title,
       workspacePublicId: workspaces.publicId,
       workspaceName: workspaces.name,
+      boardPublicId: boards.publicId,
+      boardName: boards.name,
     })
     .from(notifications)
     .leftJoin(cards, eq(notifications.cardId, cards.id))
+    .leftJoin(lists, eq(cards.listId, lists.id))
+    .leftJoin(boards, eq(lists.boardId, boards.id))
     .leftJoin(workspaces, eq(notifications.workspaceId, workspaces.id))
     .where(and(...conditions))
     .orderBy(desc(notifications.createdAt))
@@ -157,6 +161,9 @@ export const listByUserId = async (
       : null,
     workspace: row.workspacePublicId
       ? { publicId: row.workspacePublicId, name: row.workspaceName ?? "" }
+      : null,
+    board: row.boardPublicId
+      ? { publicId: row.boardPublicId, name: row.boardName ?? "" }
       : null,
   }));
 
