@@ -7,7 +7,7 @@ import * as memberRepo from "@kan/db/repository/member.repo";
 import * as notificationRepo from "@kan/db/repository/notification.repo";
 import * as userRepo from "@kan/db/repository/user.repo";
 import * as workspaceRepo from "@kan/db/repository/workspace.repo";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { boards, cards, lists } from "@kan/db/schema";
 import { sendEmail } from "@kan/email";
 import { parseMentionsFromHTML } from "@kan/shared/utils";
@@ -148,11 +148,15 @@ export async function sendWatchNotifications({
   cardId,
   actorUserId,
   activityType,
+  fromListId,
+  toListId,
 }: {
   db: dbClient;
   cardId: number;
   actorUserId: string;
   activityType?: string;
+  fromListId?: number;
+  toListId?: number;
 }) {
   try {
     const watcherUserIds = await cardWatcherRepo.getWatcherUserIds(db, cardId);
@@ -175,12 +179,25 @@ export async function sendWatchNotifications({
     const actorName = actor?.name?.trim() || actor?.email || undefined;
     const boardName = cardRow?.boardName ?? undefined;
     const boardPublicId = cardRow?.boardPublicId ?? undefined;
+    let fromListName: string | undefined;
+    let toListName: string | undefined;
+
+    if (fromListId !== undefined && toListId !== undefined) {
+      const listRows = await db
+        .select({ id: lists.id, name: lists.name })
+        .from(lists)
+        .where(or(eq(lists.id, fromListId), eq(lists.id, toListId)));
+      fromListName = listRows.find((list) => list.id === fromListId)?.name;
+      toListName = listRows.find((list) => list.id === toListId)?.name;
+    }
 
     const metadata = JSON.stringify({
       activityType,
       actorName,
       boardName,
       boardPublicId,
+      fromListName,
+      toListName,
     });
 
     await Promise.all(

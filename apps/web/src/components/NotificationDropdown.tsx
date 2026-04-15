@@ -63,14 +63,23 @@ function getNotificationMessage(
   cardTitle?: string | null,
   workspaceName?: string | null,
   actorName?: string | null,
-  metadata?: { boardName?: string; memberPublicId?: string; cardPublicId?: string; activityType?: string; actorName?: string; boardPublicId?: string } | null,
+  metadata?: {
+    boardName?: string;
+    memberPublicId?: string;
+    cardPublicId?: string;
+    activityType?: string;
+    actorName?: string;
+    boardPublicId?: string;
+    fromListName?: string;
+    toListName?: string;
+  } | null,
   activityType?: string | null,
   board?: { publicId: string; name: string } | null,
 ): string {
   switch (type) {
     case "card.member.added":
       return cardTitle
-        ? `You were added to card "${cardTitle}"`
+        ? `You were added to card "${cardTitle}"${board?.name ?? metadata?.boardName ? ` in "${board?.name ?? metadata?.boardName}"` : ""}`
         : "You were added to a card";
     case "board.member.added":
       return metadata?.boardName
@@ -100,12 +109,19 @@ function getNotificationMessage(
         : "You were invited to a workspace";
     case "card.activity": {
       const who = actorName?.trim() || metadata?.actorName?.trim() || "Someone";
-      const action = activityTypeToAction(activityType ?? metadata?.activityType);
+      const currentActivityType = activityType ?? metadata?.activityType;
+      const action = activityTypeToAction(currentActivityType);
       const boardName = board?.name ?? metadata?.boardName;
       const inBoard = boardName ? ` in "${boardName}"` : "";
+      const fromListName = metadata?.fromListName;
+      const toListName = metadata?.toListName;
+      const moveDetails =
+        currentActivityType === "card.updated.list" && fromListName && toListName
+          ? ` from "${fromListName}" to "${toListName}"`
+          : "";
       return cardTitle
-        ? `${who} ${action} on "${cardTitle}"${inBoard}`
-        : `${who} ${action} on a watched card${inBoard}`;
+        ? `${who} ${action}${moveDetails} on "${cardTitle}"${inBoard}`
+        : `${who} ${action}${moveDetails} on a watched card${inBoard}`;
     }
     default:
       return "Notification";
@@ -254,6 +270,8 @@ export default function NotificationDropdown({
                                 cardPublicId?: string;
                                 activityType?: string;
                                 actorName?: string;
+                                fromListName?: string;
+                                toListName?: string;
                               };
                             } catch {
                               return null;

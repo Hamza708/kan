@@ -1101,8 +1101,18 @@ export const cardRouter = createTRPCRouter({
       if (activities.length > 0) {
         await cardActivityRepo.bulkCreate(ctx.db, activities);
 
-        sendWatchNotifications({ db: ctx.db, cardId: result.id, actorUserId: userId, activityType: activities[0]?.type }).catch(
-          (error) => console.error("Failed to send watch notifications:", error),
+        const listMoveActivity = activities.find(
+          (activity) => activity.type === "card.updated.list",
+        );
+        sendWatchNotifications({
+          db: ctx.db,
+          cardId: result.id,
+          actorUserId: userId,
+          activityType: activities[0]?.type,
+          fromListId: listMoveActivity?.fromListId,
+          toListId: listMoveActivity?.toListId,
+        }).catch((error) =>
+          console.error("Failed to send watch notifications:", error),
         );
       }
 
