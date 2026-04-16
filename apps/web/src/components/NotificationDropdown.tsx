@@ -78,9 +78,13 @@ function getNotificationMessage(
 ): string {
   switch (type) {
     case "card.member.added":
-      return cardTitle
-        ? `You were added to card "${cardTitle}"${board?.name ?? metadata?.boardName ? ` in "${board?.name ?? metadata?.boardName}"` : ""}`
-        : "You were added to a card";
+      const boardName = board?.name ?? metadata?.boardName;
+      if (cardTitle)
+        return `You were added to card "${cardTitle}"${
+          boardName ? ` in "${boardName}"` : ""
+        }`;
+      if (boardName) return `You were added to a card in "${boardName}"`;
+      return "You were added to a card";
     case "board.member.added":
       return metadata?.boardName
         ? `You were added to board "${metadata.boardName}"`

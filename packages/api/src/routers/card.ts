@@ -155,6 +155,34 @@ export const cardRouter = createTRPCRouter({
         }));
 
         await cardActivityRepo.bulkCreate(ctx.db, cardActivitesInsert);
+
+        // Notify newly added members about the new card
+        const membersForNotifications = await Promise.all(
+          input.memberPublicIds.map((memberPublicId) =>
+            workspaceRepo.getMemberByPublicId(ctx.db, memberPublicId),
+          ),
+        );
+
+        await Promise.all(
+          membersForNotifications
+            .filter(
+              (member): member is { id: number; userId: string } =>
+                !!member?.userId && member.userId !== userId,
+            )
+            .map((member) =>
+              notificationRepo.create(ctx.db, {
+                type: "card.member.added",
+                userId: member.userId,
+                cardId: newCardId,
+                workspaceId: list.workspaceId,
+                metadata: JSON.stringify({
+                  cardPublicId: newCard.publicId,
+                  boardPublicId: list.boardPublicId,
+                  boardName: list.boardName,
+                }),
+              }),
+            ),
+        );
       }
 
       if (input.description) {

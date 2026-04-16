@@ -99,6 +99,11 @@ export function NewCardForm({
     enabled: !!boardPublicId,
   });
 
+  const { data: boardMembers = [] } = api.board.listMembers.useQuery(
+    { boardPublicId },
+    { enabled: !!boardPublicId && !isTemplate },
+  );
+
   // this adds the new created label to selected labels
   useEffect(() => {
     const newLabelId = modalStates.NEW_LABEL_CREATED;
@@ -230,25 +235,56 @@ export function NewCardForm({
       selected: list.publicId === watch("listPublicId"),
     })) ?? [];
 
+  const boardMemberEmailSet = new Set(
+    boardMembers
+      .map((m) => m.user?.email)
+      .filter((email): email is string => !!email),
+  );
+
+  useEffect(() => {
+    if (!boardMembers.length) return;
+    if (!boardData?.workspace.members) return;
+
+    const allowedWorkspaceMemberPublicIds = new Set(
+      boardData.workspace.members
+        .filter(
+          (member) => boardMemberEmailSet.has(member.email),
+        )
+        .map((member) => member.publicId),
+    );
+
+    const filtered = memberPublicIds.filter((id) =>
+      allowedWorkspaceMemberPublicIds.has(id),
+    );
+
+    if (filtered.length !== memberPublicIds.length) {
+      setValue("memberPublicIds", filtered);
+    }
+  }, [boardMembers, boardData?.workspace.members, memberPublicIds, setValue]);
+
   const formattedMembers =
-    boardData?.workspace.members.map((member) => ({
-      key: member.publicId,
-      value: formatMemberDisplayName(
-        member.user?.name ?? null,
-        member.user?.email ?? member.email,
-      ),
-      selected: memberPublicIds.includes(member.publicId),
-      leftIcon: (
-        <Avatar
-          size="xs"
-          name={member.user?.name ?? ""}
-          imageUrl={
-            member.user?.image ? getAvatarUrl(member.user.image) : undefined
-          }
-          email={member.user?.email ?? member.email}
-        />
-      ),
-    })) ?? [];
+    boardData?.workspace.members
+      .filter(
+        (member) => boardMemberEmailSet.has(member.email),
+      )
+      .map((member) => ({
+        key: member.publicId,
+        value: formatMemberDisplayName(
+          member.user?.name ?? null,
+          member.user?.email ?? member.email,
+        ),
+        selected: memberPublicIds.includes(member.publicId),
+        leftIcon: (
+          <Avatar
+            size="xs"
+            name={member.user?.name ?? ""}
+            imageUrl={
+              member.user?.image ? getAvatarUrl(member.user.image) : undefined
+            }
+            email={member.user?.email ?? member.email}
+          />
+        ),
+      })) ?? [];
 
   const onSubmit = (data: NewCardFormInput) => {
     createCard.mutate({
