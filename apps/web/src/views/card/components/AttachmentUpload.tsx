@@ -52,6 +52,7 @@ export function AttachmentUpload({ cardPublicId }: { cardPublicId: string }) {
         message: t`Failed to upload attachment. Please try again.`,
         icon: "error",
       });
+    } finally {
       setUploading(false);
     }
   };
@@ -59,13 +60,14 @@ export function AttachmentUpload({ cardPublicId }: { cardPublicId: string }) {
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
 
-    // Reset input
     event.target.value = "";
 
-    await uploadFile(file);
+    for (const file of files) {
+      await uploadFile(file);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -92,8 +94,9 @@ export function AttachmentUpload({ cardPublicId }: { cardPublicId: string }) {
     const files = Array.from(e.dataTransfer.files);
     if (files.length === 0) return;
 
-    // Upload the first file (or could upload all files)
-    await uploadFile(files[0] ?? new File([], ""));
+    for (const file of files) {
+      await uploadFile(file);
+    }
   };
 
   return (
@@ -103,6 +106,7 @@ export function AttachmentUpload({ cardPublicId }: { cardPublicId: string }) {
         type="file"
         id="attachment-upload"
         className="hidden"
+        multiple
         onChange={handleFileSelect}
         disabled={uploading}
       />
