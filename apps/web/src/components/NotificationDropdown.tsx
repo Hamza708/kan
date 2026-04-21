@@ -2,11 +2,49 @@ import Link from "next/link";
 import { Menu, Transition } from "@headlessui/react";
 import { t } from "@lingui/core/macro";
 import { formatDistanceToNow } from "date-fns";
-import { Fragment } from "react";
-import { TbBell } from "react-icons/tb";
+import { Fragment, useEffect, useRef } from "react";
+import { PiBellLight } from "react-icons/pi";
 import { twMerge } from "tailwind-merge";
 
 import { api } from "~/utils/api";
+
+function playNotificationSound() {
+  try {
+    const ctx = new AudioContext();
+    const t0 = ctx.currentTime;
+
+    // Three-partial bell chord: fundamental + octave + fifth
+    const partials: [number, number, number][] = [
+      [1047, 0.25, 1.4],  // C6 fundamental
+      [2093, 0.12, 1.0],  // C7 octave
+      [1568, 0.08, 0.8],  // G6 fifth
+    ];
+
+    for (const [freq, amp, decay] of partials) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, t0);
+
+      // Sharp attack, long natural exponential decay
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(amp, t0 + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + decay);
+
+      osc.start(t0);
+      osc.stop(t0 + decay);
+    }
+
+    // Close context after longest partial finishes
+    setTimeout(() => ctx.close(), 1600);
+  } catch {
+    // AudioContext not available (SSR or blocked)
+  }
+}
 
 interface NotificationDropdownProps {
   isCollapsed?: boolean;
@@ -173,6 +211,14 @@ export default function NotificationDropdown({
     { enabled: true },
   );
 
+  const prevUnreadCount = useRef<number | null>(null);
+  useEffect(() => {
+    if (prevUnreadCount.current !== null && unreadCount > prevUnreadCount.current) {
+      playNotificationSound();
+    }
+    prevUnreadCount.current = unreadCount;
+  }, [unreadCount]);
+
   const { data: listData, isLoading: listLoading } =
     api.notification.list.useQuery({ limit: 20 }, { enabled: true });
 
@@ -205,7 +251,7 @@ export default function NotificationDropdown({
           aria-label={t`Notifications`}
         >
           <span className="relative inline-flex">
-            <TbBell
+            <PiBellLight
               size={22}
               className="text-light-900 dark:text-dark-900"
               aria-hidden
