@@ -392,6 +392,7 @@ function AttachmentThumbnail({
           fill
           className="object-cover"
           sizes="64px"
+          unoptimized
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-light-100 dark:bg-dark-100">

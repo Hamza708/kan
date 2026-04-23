@@ -128,7 +128,7 @@ const Card = ({
               {hasAttachments && (
                 <div className="flex items-center gap-1 text-light-700 dark:text-dark-800">
                   <HiOutlinePaperClip className="h-4 w-4" />
-                  <span className="text-[11px]">Attachments ({attachments!.length})</span>
+                  <span className="text-[11px]">{attachments!.length}</span>
                 </div>
               )}
             </div>
@@ -141,7 +141,7 @@ const Card = ({
                     className="flex-shrink-0"
                   />
                   <span className="text-[10px] text-light-900 dark:text-dark-950">
-                    Checklist {completedItems}/{totalItems}
+                    {completedItems}/{totalItems}
                   </span>
                 </div>
               )}
