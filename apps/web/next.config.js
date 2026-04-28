@@ -66,7 +66,6 @@ const config = {
     },
   },
   experimental: {
-    instrumentationHook: true,
     swcPlugins: [["@lingui/swc-plugin", {}]],
   },
 
