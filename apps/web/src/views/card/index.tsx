@@ -34,6 +34,7 @@ import { DeleteChecklistConfirmation } from "./components/DeleteChecklistConfirm
 import { DeleteCommentConfirmation } from "./components/DeleteCommentConfirmation";
 import Dropdown from "./components/Dropdown";
 import { DueDateSelector } from "./components/DueDateSelector";
+import { ReminderSelector } from "./components/ReminderSelector";
 import { WatchButton } from "./components/WatchButton";
 import LabelSelector from "./components/LabelSelector";
 import ListSelector from "./components/ListSelector";
@@ -157,6 +158,28 @@ export function CardRightPanel({ isTemplate }: { isTemplate?: boolean }) {
           dueDate={card?.dueDate}
           isLoading={!card}
           disabled={!canEdit}
+        />
+      </div>
+      <div className="mb-4 flex w-full flex-row">
+        <p className="my-2 mb-2 w-[100px] text-sm font-medium">{t`Reminder 1`}</p>
+        <ReminderSelector
+          cardPublicId={cardId ?? ""}
+          reminderField="reminder1Minutes"
+          value={card?.reminder1Minutes}
+          isLoading={!card}
+          disabled={!canEdit}
+          hasDueDate={!!card?.dueDate}
+        />
+      </div>
+      <div className="mb-4 flex w-full flex-row">
+        <p className="my-2 mb-2 w-[100px] text-sm font-medium">{t`Reminder 2`}</p>
+        <ReminderSelector
+          cardPublicId={cardId ?? ""}
+          reminderField="reminder2Minutes"
+          value={card?.reminder2Minutes}
+          isLoading={!card}
+          disabled={!canEdit}
+          hasDueDate={!!card?.dueDate}
         />
       </div>
       <div className="mb-4 flex w-full flex-row">

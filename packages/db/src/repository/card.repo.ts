@@ -185,6 +185,8 @@ export const update = async (
     title?: string;
     description?: string;
     dueDate?: Date | null;
+    reminder1Minutes?: number | null;
+    reminder2Minutes?: number | null;
   },
   args: {
     cardPublicId: string;
@@ -196,6 +198,14 @@ export const update = async (
       title: cardInput.title,
       description: cardInput.description,
       dueDate: cardInput.dueDate !== undefined ? cardInput.dueDate : undefined,
+      reminder1Minutes:
+        cardInput.reminder1Minutes !== undefined
+          ? cardInput.reminder1Minutes
+          : undefined,
+      reminder2Minutes:
+        cardInput.reminder2Minutes !== undefined
+          ? cardInput.reminder2Minutes
+          : undefined,
       updatedAt: new Date(),
     })
     .where(and(eq(cards.publicId, args.cardPublicId), isNull(cards.deletedAt)))
@@ -205,6 +215,8 @@ export const update = async (
       title: cards.title,
       description: cards.description,
       dueDate: cards.dueDate,
+      reminder1Minutes: cards.reminder1Minutes,
+      reminder2Minutes: cards.reminder2Minutes,
     });
 
   return result;
@@ -425,6 +437,8 @@ export const getWithListAndMembersByPublicId = async (
       title: true,
       description: true,
       dueDate: true,
+      reminder1Minutes: true,
+      reminder2Minutes: true,
       createdBy: true,
     },
     with: {
@@ -814,6 +828,8 @@ export const reorder = async (
         title: true,
         description: true,
         dueDate: true,
+        reminder1Minutes: true,
+        reminder2Minutes: true,
       },
       where: eq(cards.id, card.id),
     });

@@ -59,7 +59,8 @@ type NotificationType =
   | "workspace.member.invited"
   | "board.member.added"
   | "card.member.added"
-  | "card.activity";
+  | "card.activity"
+  | "card.due_date.reminder";
 
 /**
  * Uses plain template literals so messages render correctly in production (Vercel).
@@ -110,6 +111,7 @@ function getNotificationMessage(
     boardPublicId?: string;
     fromListName?: string;
     toListName?: string;
+    dueDate?: string;
   } | null,
   activityType?: string | null,
   board?: { publicId: string; name: string } | null,
@@ -165,6 +167,20 @@ function getNotificationMessage(
         ? `${who} ${action}${moveDetails} on "${cardTitle}"${inBoard}`
         : `${who} ${action}${moveDetails} on a watched card${inBoard}`;
     }
+    case "card.due_date.reminder": {
+      const boardName = board?.name ?? metadata?.boardName;
+      const dueDate = metadata?.dueDate
+        ? new Date(metadata.dueDate).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : null;
+      const inBoard = boardName ? ` in "${boardName}"` : "";
+      if (cardTitle && dueDate) return `"${cardTitle}" is due on ${dueDate}${inBoard}`;
+      if (cardTitle) return `"${cardTitle}" is due soon${inBoard}`;
+      return `A card is due soon${inBoard}`;
+    }
     default:
       return "Notification";
   }
@@ -183,6 +199,9 @@ function getNotificationLink(
     return `/cards/${cardPublicId ?? metadata?.cardPublicId}`;
   }
   if (type === "card.activity" && cardPublicId) {
+    return `/cards/${cardPublicId}`;
+  }
+  if (type === "card.due_date.reminder" && cardPublicId) {
     return `/cards/${cardPublicId}`;
   }
   if (type === "board.member.added" && metadata?.boardPublicId) {

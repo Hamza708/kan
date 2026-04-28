@@ -234,6 +234,7 @@ export const getByPublicId = async (
               publicId: true,
               email: true,
               status: true,
+              userId: true,
             },
             with: {
               user: {
@@ -247,6 +248,12 @@ export const getByPublicId = async (
             where: isNull(workspaceMembers.deletedAt),
           },
         },
+      },
+      members: {
+        columns: {
+          userId: true,
+        },
+        where: isNull(boardMembers.deletedAt),
       },
       labels: {
         columns: {
@@ -375,10 +382,23 @@ export const getByPublicId = async (
 
   if (!board) return null;
 
+  const boardMemberUserIds = new Set(
+    board.members
+      .filter((m): m is typeof m & { userId: string } => m.userId !== null)
+      .map((m) => m.userId),
+  );
+
   const formattedResult = {
     ...board,
     favorite: board.userFavorites.length > 0,
     userFavorites: undefined,
+    members: undefined,
+    workspace: {
+      ...board.workspace,
+      members: board.workspace.members
+        .filter((m) => m.userId !== null && boardMemberUserIds.has(m.userId))
+        .map(({ userId: _userId, ...rest }) => rest),
+    },
     lists: board.lists.map((list) => ({
       ...list,
       cards: list.cards.map((card) => ({

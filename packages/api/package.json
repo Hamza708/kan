@@ -31,6 +31,10 @@
     "./utils/permissions": {
       "types": "./dist/utils/permissions.d.ts",
       "default": "./src/utils/permissions.ts"
+    },
+    "./utils/notifications": {
+      "types": "./dist/utils/notifications.d.ts",
+      "default": "./src/utils/notifications.ts"
     }
   },
   "license": "GPL-3.0",

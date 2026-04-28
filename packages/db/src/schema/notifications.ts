@@ -25,6 +25,7 @@ export const notificationTypes = [
   "board.member.added",
   "card.member.added",
   "card.activity",
+  "card.due_date.reminder",
 ] as const;
 
 export type NotificationType = (typeof notificationTypes)[number];

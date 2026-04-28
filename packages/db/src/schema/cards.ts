@@ -74,6 +74,8 @@ export const cards = pgTable("card", {
     .references(() => lists.id, { onDelete: "cascade" }),
   importId: bigint("importId", { mode: "number" }).references(() => imports.id),
   dueDate: timestamp("dueDate"),
+  reminder1Minutes: integer("reminder1Minutes"),
+  reminder2Minutes: integer("reminder2Minutes"),
 }).enableRLS();
 
 export const cardsRelations = relations(cards, ({ one, many }) => ({

@@ -961,6 +961,8 @@ export const cardRouter = createTRPCRouter({
         index: z.number().optional(),
         listPublicId: z.string().min(12).optional(),
         dueDate: z.date().nullable().optional(),
+        reminder1Minutes: z.number().int().nonnegative().nullable().optional(),
+        reminder2Minutes: z.number().int().nonnegative().nullable().optional(),
       }),
     )
     .output(z.custom<Awaited<ReturnType<typeof cardRepo.update>>>())
@@ -1028,18 +1030,32 @@ export const cardRouter = createTRPCRouter({
             description: string | null;
             publicId: string;
             dueDate: Date | null;
+            reminder1Minutes: number | null;
+            reminder2Minutes: number | null;
           }
         | undefined;
 
       const previousDueDate = existingCard.dueDate;
 
-      if (input.title || input.description || input.dueDate !== undefined) {
+      if (
+        input.title ||
+        input.description ||
+        input.dueDate !== undefined ||
+        input.reminder1Minutes !== undefined ||
+        input.reminder2Minutes !== undefined
+      ) {
         result = await cardRepo.update(
           ctx.db,
           {
             ...(input.title && { title: input.title }),
             ...(input.description && { description: input.description }),
             ...(input.dueDate !== undefined && { dueDate: input.dueDate }),
+            ...(input.reminder1Minutes !== undefined && {
+              reminder1Minutes: input.reminder1Minutes,
+            }),
+            ...(input.reminder2Minutes !== undefined && {
+              reminder2Minutes: input.reminder2Minutes,
+            }),
           },
           { cardPublicId: input.cardPublicId },
         );

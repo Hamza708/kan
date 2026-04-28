@@ -17,6 +17,7 @@ const notificationItemSchema = z.object({
     "board.member.added",
     "card.member.added",
     "card.activity",
+    "card.due_date.reminder",
   ]),
   cardId: z.number().nullable(),
   commentId: z.number().nullable(),
