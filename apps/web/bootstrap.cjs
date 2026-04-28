@@ -12,6 +12,8 @@
  * 2. Start the Next.js standalone server.
  */
 
+
+
 const { writeFileSync, existsSync, mkdirSync } = require("fs");
 const path = require("path");
 
