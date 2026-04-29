@@ -287,7 +287,7 @@ export default function NotificationDropdown({
           newestUnread.workspace?.publicId,
           metadata,
         );
-        showNotification("Kan", message, link);
+        showNotification("WorkOS", message, link);
       }
     }
 

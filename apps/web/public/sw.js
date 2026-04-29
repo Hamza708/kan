@@ -9,7 +9,7 @@ self.addEventListener("push", (event) => {
     payload = { title: "New notification", body: event.data.text() };
   }
 
-  const { title = "Kan", body = "You have a new notification", url = "/" } = payload;
+  const { title = "WorkOS", body = "You have a new notification", url = "/" } = payload;
 
   event.waitUntil(
     self.registration.showNotification(title, {
