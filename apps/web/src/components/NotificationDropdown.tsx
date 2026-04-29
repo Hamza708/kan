@@ -6,6 +6,7 @@ import { Fragment, useEffect, useRef } from "react";
 import { PiBellLight } from "react-icons/pi";
 import { twMerge } from "tailwind-merge";
 
+import { useDesktopNotifications } from "~/hooks/useDesktopNotifications";
 import { api } from "~/utils/api";
 
 function playNotificationSound() {
@@ -230,16 +231,70 @@ export default function NotificationDropdown({
     { enabled: true },
   );
 
-  const prevUnreadCount = useRef<number | null>(null);
-  useEffect(() => {
-    if (prevUnreadCount.current !== null && unreadCount > prevUnreadCount.current) {
-      playNotificationSound();
-    }
-    prevUnreadCount.current = unreadCount;
-  }, [unreadCount]);
+  const { permission, requestPermission, showNotification } = useDesktopNotifications();
 
   const { data: listData, isLoading: listLoading } =
     api.notification.list.useQuery({ limit: 20 }, { enabled: true });
+
+  const items = listData?.items ?? [];
+
+  const prevUnreadCount = useRef<number | null>(null);
+  const prevItemIds = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    const isNew =
+      prevUnreadCount.current !== null && unreadCount > prevUnreadCount.current;
+
+    if (isNew) {
+      playNotificationSound();
+
+      // Find the newest unread item to show in the desktop notification
+      const newestUnread = items.find(
+        (item) => !item.readAt && !prevItemIds.current.has(item.id),
+      );
+      if (newestUnread) {
+        const metadata = newestUnread.metadata
+          ? (() => {
+              try {
+                return JSON.parse(newestUnread.metadata) as {
+                  boardPublicId?: string;
+                  boardName?: string;
+                  memberPublicId?: string;
+                  cardPublicId?: string;
+                  activityType?: string;
+                  actorName?: string;
+                  fromListName?: string;
+                  toListName?: string;
+                  dueDate?: string;
+                };
+              } catch {
+                return null;
+              }
+            })()
+          : null;
+        const message = getNotificationMessage(
+          newestUnread.type,
+          newestUnread.card?.title,
+          newestUnread.workspace?.name,
+          newestUnread.actorName,
+          metadata,
+          newestUnread.activityType,
+          newestUnread.board,
+        );
+        const link = getNotificationLink(
+          newestUnread.type,
+          newestUnread.card?.publicId,
+          newestUnread.workspace?.publicId,
+          metadata,
+        );
+        showNotification("WorkOS", message, link);
+      }
+    }
+
+    prevUnreadCount.current = unreadCount;
+    prevItemIds.current = new Set(items.map((i) => i.id));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unreadCount, items]);
 
   const utils = api.useUtils();
   const markAsReadMutation = api.notification.markAsRead.useMutation({
@@ -255,7 +310,6 @@ export default function NotificationDropdown({
     },
   });
 
-  const items = listData?.items ?? [];
   const hasUnread = unreadCount > 0;
 
   return (
@@ -306,16 +360,28 @@ export default function NotificationDropdown({
             <div className="flex flex-col text-neutral-900 dark:text-dark-1000">
               <div className="flex items-center justify-between border-b border-light-300 px-3 py-2 dark:border-dark-400">
                 <span className="text-sm font-medium">{t`Notifications`}</span>
-                {hasUnread && (
-                  <button
-                    type="button"
-                    onClick={() => markAllAsReadMutation.mutate()}
-                    disabled={markAllAsReadMutation.isPending}
-                    className="text-primary-600 dark:text-primary-400 text-xs hover:underline"
-                  >
-                    {t`Mark all as read`}
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {permission === "default" && (
+                    <button
+                      type="button"
+                      onClick={() => void requestPermission()}
+                      className="text-xs text-light-700 hover:text-neutral-900 dark:text-dark-600 dark:hover:text-dark-1000 hover:underline"
+                      title={t`Enable desktop notifications`}
+                    >
+                      {t`Enable alerts`}
+                    </button>
+                  )}
+                  {hasUnread && (
+                    <button
+                      type="button"
+                      onClick={() => markAllAsReadMutation.mutate()}
+                      disabled={markAllAsReadMutation.isPending}
+                      className="text-primary-600 dark:text-primary-400 text-xs hover:underline"
+                    >
+                      {t`Mark all as read`}
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="max-h-[320px] overflow-y-auto">
                 {listLoading ? (
